@@ -24,7 +24,13 @@ namespace Azonera.Equipment
 
         private void Awake()
         {
-            _stats = GetComponent<CharacterStats>();
+            EnsureStats();
+        }
+
+        // Leniwe pobranie statów — działa też, gdy Equip zostanie wywołane przed Awake (np. w testach EditMode).
+        private void EnsureStats()
+        {
+            if (_stats == null) _stats = GetComponent<CharacterStats>();
         }
 
         public ItemData GetEquipped(EquipmentSlotType slot)
@@ -36,6 +42,7 @@ namespace Azonera.Equipment
         /// <summary>Zakłada przedmiot. Zwraca przedmiot, który był wcześniej w slocie (do plecaka), lub null.</summary>
         public ItemData Equip(ItemData item)
         {
+            EnsureStats();
             if (item == null || !item.IsEquippable) return item;
             if (_stats != null && item.RequiredLevel > _stats.Level)
             {
@@ -55,6 +62,7 @@ namespace Azonera.Equipment
         /// <summary>Zdejmuje przedmiot ze slotu. Zwraca zdjęty przedmiot (do plecaka) lub null.</summary>
         public ItemData Unequip(EquipmentSlotType slot)
         {
+            EnsureStats();
             if (!_equipped.TryGetValue(slot, out var item)) return null;
             _equipped.Remove(slot);
             RecalculateModifiers();
