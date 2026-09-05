@@ -79,3 +79,10 @@ backpack; minimapa; battle list; chat z zakładkami; hotbary).
 ### Następny krok po weryfikacji
 - Jeśli zielono: PLAY na `AzoneraTemple` → screenshot; potem realne assety (timber/stone kit, postać) wg Art Bible.
 - Jeśli błędy: diagnoza z `build-dungeon.log`, fix, ponowny batchmode.
+
+### WERYFIKACJA (batchmode, 2026-09-05 23:09) — ZIELONO
+- Kompilacja: **0 błędów** (cały projekt + asmdefy + testy).
+- Scena `AzoneraTemple` zbudowana; Library odbudowane.
+- **Testy EditMode: 22/22 PASS** (Stats/Inventory/Equipment/Loot/Save).
+- **Testy PlayMode: 1/1 PASS** — pętla walka→śmierć→EXP→loot→pickup zweryfikowana E2E.
+- Wniosek: pętla single-player = **WORKING** (nie już PARTIAL). Fundament twardo potwierdzony.

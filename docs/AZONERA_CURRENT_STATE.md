@@ -140,3 +140,11 @@ save/load) na dedykowanej scenie `TestArena`. Cel: zamienić status „PARTIAL/n
 zgodna z zasadą PRESERVE → IMPROVE.
 
 (Równolegle BLOCKER dla warstwy wizualnej: proszę o dostarczenie referencyjnego screena — bez niego nie zaczynam realnej grafiki.)
+
+---
+## UPDATE 2026-09-05 (weryfikacja testami)
+Uruchomiono testy w Unity batchmode: **EditMode 22/22 PASS, PlayMode 1/1 PASS**, 0 błędów kompilacji.
+Status następujących systemów zmienia się z PARTIAL na **WORKING (zweryfikowane testami)**:
+CharacterStats/obrażenia, EXP/level, Inventory (stack/waga/limit), Equipment (modyfikatory+wymogi),
+LootTable, SaveSystem (round-trip), oraz integracyjna pętla walki (MeleeAttacker + MonsterAI death→reward→loot→pickup).
+Dodano scenę `AzoneraTemple` (ciemny loch + Classic HUD) — środowisko GREYBOX, HUD docelowy.
