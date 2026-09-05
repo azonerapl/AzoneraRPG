@@ -109,3 +109,14 @@ _Ostatnia aktualizacja: SESJA 3, PHASE 1 — KOMPILACJA ZIELONA (0 błędów, po
 - `PlayerCharacterVisual` — po zbudowaniu rycerza dopina `CharacterIdleAnimator`.
 - Foto-real nadal zablokowany (workspace: plan free, 0 kredytów, unlim.available=false) — czeka na doładowanie/plan.
 - Weryfikacja: brak `error CS` po wykryciu zmian; pełny compile przy PLAY.
+
+## SESJA 3 c.d. — Postać artykułowana (maks. realizm proceduralny)
+- Przebudowa `CharacterVisualFactory` na ARTYKUŁOWANY rig z brył: stawy Pelvis→Hip→Knee, Spine→Chest→Shoulder→Elbow,
+  Neck; warstwowy pancerz (kirys+pierś, fauld/tassety, cuisse/poleyn/greave/sabaton, pauldrony 2-warstwowe, couter,
+  gorget, hełm z nosalem/pióropuszem, tarcza z bossem/rantem, miecz). Materiały PBR: stal(metallic 1), darksteel,
+  chainmail, skóra, złoto (emisja), peleryna, skóra twarzy, włosy, ostrze.
+- `KnightRig` — referencje stawów. `KnightAnimator` — proceduralny chód/idle: naprzemienny wymach nóg + kontra rąk,
+  ugięcie kolan, oddech kręgosłupa, bob kroków; kadencja/amplituda z `PlayerController.CurrentSpeed`.
+- `PlayerCharacterVisual` dopina `KnightAnimator`. Usunięto `CharacterIdleAnimator` (zastąpiony).
+- Proporcje ~2 units (stopy na ziemi, głowa ~2.0). Weryfikacja: **CompileScripts zielone (0 błędów)**.
+- To maksymalny realizm bez zewnętrznych modeli/tekstur; foto-real (sprite/model) czeka na kredyty w usłudze graficznej.

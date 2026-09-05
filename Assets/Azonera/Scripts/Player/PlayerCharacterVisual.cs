@@ -26,8 +26,7 @@ namespace Azonera.Player
             }
 
             _visual = CharacterVisualFactory.BuildKnight(transform);
-            var idle = _visual.AddComponent<CharacterIdleAnimator>();
-            // target = sam KnightVisual (Start ustawi transform)
+            _visual.AddComponent<KnightAnimator>(); // KnightRig jest już na korzeniu (dodany przez fabrykę)
         }
     }
 }
