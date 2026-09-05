@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dcfcd79099e13f43b744f17f84f3703, type: 3}
+  m_Name: Item_MonsterTooth
+  m_EditorClassIdentifier: Assembly-CSharp::Azonera.Items.ItemData
+  ItemId: monster_tooth
+  DisplayName: "Kie\u0142 bestii"
+  Description: "Trofeum. Kto\u015B mo\u017Ce chcie\u0107 je kupi\u0107."
+  Icon: {fileID: 0}
+  WorldModel: {fileID: 0}
+  Type: 11
+  Rarity: 0
+  Slot: 0
+  Weight: 0.3
+  Stackable: 1
+  MaxStack: 100
+  Value: 4
+  RequiredLevel: 0
+  RequiredClassTag: 
+  Modifiers: []
+  HealAmount: 0
+  ManaAmount: 0

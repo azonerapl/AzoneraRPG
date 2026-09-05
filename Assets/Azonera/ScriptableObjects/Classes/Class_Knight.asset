@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2a37b8d5fedc2d49a7cdbe061ad082c, type: 3}
+  m_Name: Class_Knight
+  m_EditorClassIdentifier: Assembly-CSharp::Azonera.Classes.ClassData
+  Class: 0
+  DisplayName: Rycerz
+  Description: "Wojownik pierwszej linii. Wysokie HP i obrona, walka wr\u0119cz."
+  ThemeColor: {r: 0.85, g: 0.4, b: 0.3, a: 1}
+  BaseHealth: 200
+  BaseMana: 40
+  BaseAttack: 14
+  BaseDefense: 10
+  BaseArmor: 0.06
+  BaseMagicPower: 0
+  BaseMagicResist: 0.02
+  BaseMoveSpeed: 4.6
+  BaseAttackSpeed: 1.15
+  BaseCritChance: 0.05
+  BaseCritDamage: 1.5
+  BaseCapacity: 470
+  HealthPerLevel: 18
+  ManaPerLevel: 5
+  AttackPerLevel: 1.8
+  DefensePerLevel: 1
+  MagicPowerPerLevel: 0
+  CapacityPerLevel: 10
+  AllowedItemTags: []
+  StartingSpells: []

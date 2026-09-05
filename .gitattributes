@@ -1,0 +1,30 @@
+# Normalizacja końców linii — spójne LF w repo
+* text=auto eol=lf
+
+# Pliki tekstowe Unity
+*.cs           text diff=csharp
+*.meta         text
+*.unity        text
+*.asset        text
+*.mat          text
+*.prefab       text
+*.anim         text
+*.controller   text
+*.json         text
+*.md           text
+*.shader       text
+*.inputactions text
+
+# Binaria (nie diffować; docelowo Git LFS)
+*.png  binary
+*.jpg  binary
+*.tga  binary
+*.psd  binary
+*.fbx  binary
+*.obj  binary
+*.glb  binary
+*.wav  binary
+*.mp3  binary
+*.ogg  binary
+*.ttf  binary
+*.otf  binary

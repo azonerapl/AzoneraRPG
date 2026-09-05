@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2789b692817e5c43a4ee78c6bf73aea, type: 3}
+  m_Name: Monster_Goblin
+  m_EditorClassIdentifier: Assembly-CSharp::Azonera.Monsters.MonsterData
+  DisplayName: Goblin
+  Level: 3
+  MaxHealth: 80
+  Damage: 14
+  Defense: 4
+  Armor: 0
+  AttackSpeed: 0.8
+  AttackRange: 2
+  MoveSpeed: 2.9
+  AggroRange: 8
+  DeAggroRange: 15
+  RoamRadius: 5
+  ExperienceReward: 55
+  LootTable: {fileID: 11400000, guid: 8388c55eb86475d4c89eb655ed02fe32, type: 2}
+  ModelPrefab: {fileID: 0}
+  PlaceholderColor: {r: 0.45, g: 0.55, b: 0.3, a: 1}
+  PlaceholderHeight: 1.3

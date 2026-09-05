@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dcfcd79099e13f43b744f17f84f3703, type: 3}
+  m_Name: Item_RustedSword
+  m_EditorClassIdentifier: Assembly-CSharp::Azonera.Items.ItemData
+  ItemId: rusted_sword
+  DisplayName: "Zardzewia\u0142y miecz"
+  Description: "Prosty miecz. Lepszy ni\u017C pi\u0119\u015Bci."
+  Icon: {fileID: 0}
+  WorldModel: {fileID: 0}
+  Type: 0
+  Rarity: 0
+  Slot: 5
+  Weight: 38
+  Stackable: 0
+  MaxStack: 1
+  Value: 25
+  RequiredLevel: 1
+  RequiredClassTag: 
+  Modifiers:
+  - Stat: 2
+    Mode: 0
+    Value: 7
+  HealAmount: 0
+  ManaAmount: 0

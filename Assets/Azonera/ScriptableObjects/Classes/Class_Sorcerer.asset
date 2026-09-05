@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2a37b8d5fedc2d49a7cdbe061ad082c, type: 3}
+  m_Name: Class_Sorcerer
+  m_EditorClassIdentifier: Assembly-CSharp::Azonera.Classes.ClassData
+  Class: 1
+  DisplayName: "Czarnoksi\u0119\u017Cnik"
+  Description: "Mistrz niszczycielskiej magii. Wysoka mana i moc zakl\u0119\u0107, kruchy."
+  ThemeColor: {r: 0.4, g: 0.5, b: 0.95, a: 1}
+  BaseHealth: 120
+  BaseMana: 160
+  BaseAttack: 8
+  BaseDefense: 4
+  BaseArmor: 0.05
+  BaseMagicPower: 18
+  BaseMagicResist: 0.02
+  BaseMoveSpeed: 4.4
+  BaseAttackSpeed: 1
+  BaseCritChance: 0.05
+  BaseCritDamage: 1.5
+  BaseCapacity: 300
+  HealthPerLevel: 10
+  ManaPerLevel: 20
+  AttackPerLevel: 1.5
+  DefensePerLevel: 0.8
+  MagicPowerPerLevel: 3
+  CapacityPerLevel: 10
+  AllowedItemTags: []
+  StartingSpells:
+  - firebolt
+  - energy_strike
