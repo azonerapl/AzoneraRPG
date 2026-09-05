@@ -38,3 +38,12 @@ MonoBehaviour:
   StartingSpells:
   - heal
   - nature_bolt
+  MaxSoulPoints: 200
+  StartMagicLevel: 0
+  DisplaySpeed: 220
+  HealthRegenAmount: 1
+  HealthRegenInterval: 6
+  ManaRegenAmount: 1
+  ManaRegenInterval: 6
+  MeleeSkillDifficulty: 1
+  MagicSkillDifficulty: 1

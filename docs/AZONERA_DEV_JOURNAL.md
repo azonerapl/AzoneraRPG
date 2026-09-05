@@ -89,3 +89,14 @@ Weryfikacja kompilacji (z logu otwartego edytora): wszystkie pliki Fazy 1 skompi
 
 ---
 _Ostatnia aktualizacja: SESJA 3, PHASE 1 — KOMPILACJA ZIELONA (0 błędów, potwierdzone z logu otwartego edytora, świeży CompileScripts bez error CS). Testy batchmode do uruchomienia przy zamkniętym edytorze._
+## SESJA 3 c.d. — Postać gracza (blockout rycerza)
+- Próba wygenerowania FOTOREALISTYCZNEJ postaci (nano_banana_pro) — **zablokowana: „Out of credits in the selected workspace"**.
+  Nie użyto darmowych/unlim generacji bez zgody właściciela. Foto-real render/sprite do zrobienia po uzupełnieniu kredytów
+  (lub wyraźnej zgodzie na użycie darmowych generacji).
+- W zamian dodano REALNĄ postać w silniku (blockout, nie kapsuła):
+  - `Scripts/Player/CharacterVisualFactory.cs` — proceduralny rycerz: proporcjonalny humanoid (nogi/greaves, kirys,
+    naramienniki, ramiona/gauntlety, hełm z pióropuszem, peleryna, tarcza z bossem, miecz) + materiały PBR (stal/skóra/złoto).
+  - `Scripts/Player/PlayerCharacterVisual.cs` — chowa debugową kapsułę i buduje rycerza; działa w istniejącej scenie bez regeneracji.
+  - `Player/PlayerController` — gwarancja `PlayerCharacterVisual` w runtime → rycerz pojawia się po PLAY.
+  - Węzeł „KnightVisual" gotowy pod podmianę na docelowy model/sprite (pipeline zachowany).
+- Weryfikacja: kompilację potwierdzi wejście w PLAY (Unity kompiluje zmiany przy starcie gry); wcześniejsze pliki sesji zielone.

@@ -48,6 +48,8 @@ namespace Azonera.Player
                 _cameraTransform = UnityEngine.Camera.main.transform;
 
             EnsureSkills();
+            if (GetComponent<PlayerCharacterVisual>() == null)
+                gameObject.AddComponent<PlayerCharacterVisual>();
         }
 
         /// <summary>Gwarantuje graczowi SkillSet i ustawia trudność treningu wg profesji.</summary>
