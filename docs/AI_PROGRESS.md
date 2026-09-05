@@ -54,3 +54,28 @@
 ### Uwagi operacyjne
 - Tryb produkcyjny: praca WYŁĄCZNIE w katalogu projektu, przez kod/CLI/edytor-skrypty. Bez sterowania pulpitem.
 - Placeholdery-prymitywy = DEBUG, nigdy nie prezentowane jako finalna grafika.
+
+---
+
+## Sesja 2026-09-05 (wieczór) — projekt w C:\Projects\AzoneraRPG + kierunek „loch referencyjny"
+
+Referencja #2 (4 panele): ciemny izometryczny loch/świątynia + PEŁNY HUD klasycznego MMORPG
+(Skills: Exp/Level/HP/Mana/Soul/Capacity/Speed/Food/Stamina/Magic Level + skille broni; doll ekwipunku;
+backpack; minimapa; battle list; chat z zakładkami; hotbary).
+
+### Zrobione (kod, tryb „pisz teraz, weryfikacja później")
+- `Scripts/Player/PlayerSkills.cs` — witalność/skille Tibia-like zasilające HUD (Soul/Stamina/Food/Speed/MagicLevel/broń).
+- `Scripts/UI/ClassicHUDController.cs` — HUD samo-okablowujący się po nazwach (Val_*, Fill_*), reaguje na eventy statów.
+- `Editor/AzoneraDungeonBuilder.cs` — generator sceny `AzoneraTemple.unity`: ciemny kamienny loch (podłoga/ściany/kolumny),
+  8 palników (ogień + ciepłe światło + flicker), centralny ołtarz z zielonym blaskiem, czerwony dywan, skarb, kryształy-spawn,
+  mgła i post-FX (bloom/vignette/kontrast) + PEŁNY Classic HUD + gracz/kamera(iso pitch55)/managery.
+- Środowisko lochu = GREYBOX (prymitywy, klimat/kompozycja) — jawnie DEBUG do czasu realnych assetów. HUD = docelowy.
+
+### Weryfikacja
+- Uruchomiono Unity **batchmode** (`-executeMethod AzoneraDungeonBuilder.BuildDungeon`): odbudowa Library + kompilacja
+  całości (w tym asmdefy/testy z poprzedniej tury — pierwsza realna kompilacja) + budowa sceny. Log: `docs/build-dungeon.log`.
+- Status: W TOKU / do potwierdzenia z logu (kod wyjścia + brak `error CS`).
+
+### Następny krok po weryfikacji
+- Jeśli zielono: PLAY na `AzoneraTemple` → screenshot; potem realne assety (timber/stone kit, postać) wg Art Bible.
+- Jeśli błędy: diagnoza z `build-dungeon.log`, fix, ponowny batchmode.

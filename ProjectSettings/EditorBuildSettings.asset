@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Azonera/Scenes/AzoneraTemple.unity
+    guid: 67d53635f623c4345ad58ab370fd7c6f
+  - enabled: 1
     path: Assets/Azonera/Scenes/AzoneraStartingVillage.unity
     guid: 40177070ee8b8ad42819a032b320024c
   - enabled: 1
