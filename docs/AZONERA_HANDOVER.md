@@ -7,12 +7,14 @@
 ## 1. Tożsamość i wymagania
 - **Silnik:** Unity **6000.6.0f1** (URP, Color Space **Linear**). Zainstaluj dokładnie tę wersję przez Unity Hub.
 - **Platforma:** PC-first (Standalone). Android przewidziany później (URP ma tier Mobile).
-- **Repo:** git, gałąź `master`, remote **origin → https://github.com/Toruniiak/AzoneraRPG.git**.
+- **Repo (GitHub, PRYWATNE):** **origin → https://github.com/azonerapl/AzoneraRPG.git**, gałąź **`main`**.
+  Dostęp: poproś właściciela (`azonerapl`) o zaproszenie jako **collaborator** (GitHub → Settings → Collaborators),
+  wtedy `git clone` zadziała.
 - To **osobny projekt**, NIE ma nic wspólnego z serwerem Tibia OTS „Azonera.pl" (mimo nazwy marki).
 
 ## 2. Jak zdobyć i otworzyć projekt
 ```bash
-git clone https://github.com/Toruniiak/AzoneraRPG.git
+git clone https://github.com/azonerapl/AzoneraRPG.git   # gałąź main; repo prywatne (wymaga dostępu collaborator)
 ```
 - W **Unity Hub → Add → wskaż folder projektu**. Pierwsze otwarcie odbuduje `Library/` (kilka minut) — to normalne
   (`Library/`, `Temp/`, `Logs/`, `obj/`, `*.csproj`, `*.sln` są w `.gitignore`).
