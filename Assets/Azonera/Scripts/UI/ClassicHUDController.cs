@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Azonera.Stats;
 using Azonera.Player;
+using Azonera.Skills;
 using InvComp = Azonera.Inventory.Inventory;
 
 namespace Azonera.UI
@@ -20,6 +21,7 @@ namespace Azonera.UI
 
         private CharacterStats _stats;
         private PlayerSkills _skills;
+        private SkillSet _skillSet;
         private InvComp _inventory;
         private bool _cached;
 
@@ -49,6 +51,7 @@ namespace Azonera.UI
             {
                 _stats = player.GetComponent<CharacterStats>();
                 _skills = player.GetComponent<PlayerSkills>();
+                _skillSet = player.GetComponent<SkillSet>();
                 _inventory = player.GetComponent<InvComp>();
             }
             Bind(_stats, _skills, _inventory);
@@ -67,8 +70,16 @@ namespace Azonera.UI
                 _stats.OnLevelUp += HandleLevel;
                 _stats.OnStatsChanged += RefreshDerived;
             }
+            if (_skillSet != null)
+            {
+                _skillSet.OnSkillChanged += HandleSkillChanged;
+                _skillSet.OnSkillAdvanced += HandleSkillAdvanced;
+            }
             RefreshAll();
         }
+
+        private void HandleSkillChanged(SkillType t) => RefreshDerived();
+        private void HandleSkillAdvanced(SkillType t, int level) => RefreshDerived();
 
         private void OnDestroy() => Unbind();
 
@@ -80,6 +91,11 @@ namespace Azonera.UI
             _stats.OnExperienceChanged -= HandleExp;
             _stats.OnLevelUp -= HandleLevel;
             _stats.OnStatsChanged -= RefreshDerived;
+            if (_skillSet != null)
+            {
+                _skillSet.OnSkillChanged -= HandleSkillChanged;
+                _skillSet.OnSkillAdvanced -= HandleSkillAdvanced;
+            }
         }
 
         private void Set(string key, string text)
@@ -129,12 +145,29 @@ namespace Azonera.UI
             {
                 Set("Cap", Mathf.RoundToInt(_stats.GetStat(StatType.Capacity)).ToString());
             }
+            // Witalność klasyczna z PlayerSkills (Soul/Speed/Food/Stamina)
             if (_skills != null)
             {
                 Set("Soul", _skills.SoulPoints.ToString());
                 Set("Speed", _skills.Speed.ToString());
                 Set("Food", _skills.FoodText);
                 Set("Stamina", _skills.StaminaText);
+            }
+
+            // Skille i Magic Level — preferuj realny SkillSet, fallback do PlayerSkills
+            if (_skillSet != null)
+            {
+                Set("MagicLevel", _skillSet.GetLevel(SkillType.Magic).ToString());
+                Set("Fist", _skillSet.GetLevel(SkillType.Fist).ToString());
+                Set("Club", _skillSet.GetLevel(SkillType.Club).ToString());
+                Set("Sword", _skillSet.GetLevel(SkillType.Sword).ToString());
+                Set("Axe", _skillSet.GetLevel(SkillType.Axe).ToString());
+                Set("Distance", _skillSet.GetLevel(SkillType.Distance).ToString());
+                Set("Shielding", _skillSet.GetLevel(SkillType.Shielding).ToString());
+                Set("Fishing", _skillSet.GetLevel(SkillType.Fishing).ToString());
+            }
+            else if (_skills != null)
+            {
                 Set("MagicLevel", _skills.MagicLevel.ToString());
                 Set("Fist", _skills.Fist.ToString());
                 Set("Club", _skills.Club.ToString());

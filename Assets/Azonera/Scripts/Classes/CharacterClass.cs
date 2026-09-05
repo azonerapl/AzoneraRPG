@@ -7,9 +7,13 @@ namespace Azonera.Classes
     /// <summary>Identyfikator profesji. Dodanie kolejnej = jedna pozycja tutaj + nowy asset ClassData.</summary>
     public enum CharacterClass
     {
+        // Kolejność append-only (serializowane po indeksie) — nie przestawiać istniejących.
         Knight,
-        Sorcerer,
-        Druid
+        Sorcerer,   // legacy alias „Mage" (istniejący asset) — patrz Mage
+        Druid,
+        Paladin,
+        Mage,
+        Monk
     }
 
     /// <summary>
@@ -53,6 +57,24 @@ namespace Azonera.Classes
 
         [Header("Startowe zaklęcia (identyfikatory)")]
         public List<string> StartingSpells = new List<string>();
+
+        [Header("Witalność klasyczna")]
+        public int MaxSoulPoints = 200;
+        public int StartMagicLevel = 0;
+        [Tooltip("Bazowa prędkość ruchu pokazywana w HUD (styl klasyczny).")]
+        public int DisplaySpeed = 220;
+
+        [Header("Regeneracja (amount / interwał w sekundach)")]
+        public float HealthRegenAmount = 1f;
+        public float HealthRegenInterval = 6f;
+        public float ManaRegenAmount = 1f;
+        public float ManaRegenInterval = 6f;
+
+        [Header("Trening umiejętności")]
+        [Tooltip("Mnożnik trudności treningu skilli broni (<1 = szybciej). Rycerz szybciej, mag wolniej.")]
+        public float MeleeSkillDifficulty = 1f;
+        [Tooltip("Mnożnik trudności Magic Level (<1 = szybciej). Mag/Druid szybciej.")]
+        public float MagicSkillDifficulty = 1f;
 
         /// <summary>Zwraca bazową wartość statystyki dla danego poziomu.</summary>
         public float GetBaseStat(StatType stat, int level)

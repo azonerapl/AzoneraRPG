@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Azonera.Combat;
 using Azonera.Classes;
+using Azonera.Progression;
 
 namespace Azonera.Stats
 {
@@ -230,8 +231,8 @@ namespace Azonera.Stats
         /// <summary>Krzywa doświadczenia — łagodnie rosnące wymagania.</summary>
         public static long RequiredXpForLevel(int level)
         {
-            // klasyczny, przewidywalny wzrost; łatwy do przebalansowania
-            return (long)(50f * level * level + 50f * level);
+            // Deleguje do kanonicznej tabeli (formuła sześcienna w stylu klasyka).
+            return ExperienceTable.XpToNext(level);
         }
 
         public long ExperienceForNextLevel => RequiredXpForLevel(_level);

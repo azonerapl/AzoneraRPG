@@ -12,6 +12,8 @@ using Azonera.CameraSystem;
 using Azonera.Inventory;
 using Azonera.Equipment;
 using Azonera.Combat;
+using Azonera.Monsters;
+using Azonera.NPC;
 using Azonera.UI;
 using Azonera.Core;
 using Azonera.DevTools;
@@ -46,6 +48,8 @@ namespace Azonera.EditorTools
             var cam = BuildCamera(player.transform);
             BuildManagers();
             BuildClassicHUD();
+            BuildNPC();
+            BuildTestMonsters();
 
             var pc = player.GetComponent<PlayerController>();
             SetRef(pc, "_cameraTransform", cam.transform);
@@ -271,6 +275,59 @@ namespace Azonera.EditorTools
             var go = new GameObject("GameSystems");
             go.AddComponent<GameManager>();
             go.AddComponent<DebugPanel>();
+        }
+
+        // ============================================================ NPC
+        private static void BuildNPC()
+        {
+            var npc = new GameObject("NPC_GuideAlwin") { };
+            npc.transform.position = new Vector3(-4f, 1f, -3f);
+            var col = npc.AddComponent<CapsuleCollider>(); col.height = 2f; col.radius = 0.5f;
+            npc.AddComponent<NPCInteractable>();
+            var vis = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            vis.name = "Visual_DEBUG"; vis.transform.SetParent(npc.transform, false);
+            Object.DestroyImmediate(vis.GetComponent<Collider>());
+            vis.GetComponent<Renderer>().sharedMaterial = Mat("NPCBody_DEBUG", new Color(0.3f, 0.42f, 0.55f), 0.2f);
+            var mark = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            mark.name = "Marker"; mark.transform.SetParent(npc.transform, false);
+            mark.transform.localPosition = new Vector3(0, 1.8f, 0); mark.transform.localScale = Vector3.one * 0.25f;
+            mark.transform.localRotation = Quaternion.Euler(45, 45, 0);
+            Object.DestroyImmediate(mark.GetComponent<Collider>());
+            mark.GetComponent<Renderer>().sharedMaterial = Mat("Quest_DEBUG", new Color(1f, 0.85f, 0.2f), 0f, 0f, new Color(1f, 0.8f, 0.15f) * 2f);
+        }
+
+        // ============================================================ TEST MONSTERS
+        private static void BuildTestMonsters()
+        {
+            var root = new GameObject("Monsters").transform;
+            SpawnMonster("Monster_MarshSnake", new Vector3(-8, 0, 6), root);
+            SpawnMonster("Monster_MarshSnake", new Vector3(8, 0, 6), root);
+            SpawnMonster("Monster_Goblin", new Vector3(-6, 0, 9), root);
+            SpawnMonster("Monster_Goblin", new Vector3(6, 0, 9), root);
+            SpawnMonster("Monster_Wolf", new Vector3(0, 0, 8), root);
+            SpawnMonster("Monster_Skeleton", new Vector3(0, 0, 10), root);
+        }
+
+        private static void SpawnMonster(string assetName, Vector3 pos, Transform parent)
+        {
+            var data = AssetDatabase.LoadAssetAtPath<MonsterData>($"Assets/Azonera/ScriptableObjects/Monsters/{assetName}.asset");
+            if (data == null) { Debug.LogWarning("[Azonera] Brak MonsterData: " + assetName); return; }
+
+            var go = new GameObject("Monster_" + data.DisplayName);
+            go.transform.SetParent(parent, false);
+            go.transform.position = new Vector3(pos.x, 1f, pos.z);
+            var col = go.AddComponent<CapsuleCollider>(); col.height = 2f; col.radius = 0.5f;
+            var rb = go.AddComponent<Rigidbody>(); rb.isKinematic = true; rb.useGravity = false;
+            go.AddComponent<CharacterStats>();
+            go.AddComponent<MeleeAttacker>();
+            var ai = go.AddComponent<MonsterAI>();
+            SetRef(ai, "_data", data);
+
+            var vis = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            vis.name = "Visual_DEBUG"; vis.transform.SetParent(go.transform, false);
+            vis.transform.localScale = new Vector3(0.9f, Mathf.Max(0.5f, data.PlaceholderHeight * 0.7f), 0.9f);
+            Object.DestroyImmediate(vis.GetComponent<Collider>());
+            vis.GetComponent<Renderer>().sharedMaterial = Mat("Mon_" + assetName, data.PlaceholderColor, 0.1f);
         }
 
         // ============================================================ CLASSIC HUD

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Azonera.Stats;
+using Azonera.Skills;
 using Azonera.UI;
 
 namespace Azonera.Player
@@ -45,6 +46,17 @@ namespace Azonera.Player
             _rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
             if (_cameraTransform == null && UnityEngine.Camera.main != null)
                 _cameraTransform = UnityEngine.Camera.main.transform;
+
+            EnsureSkills();
+        }
+
+        /// <summary>Gwarantuje graczowi SkillSet i ustawia trudność treningu wg profesji.</summary>
+        private void EnsureSkills()
+        {
+            var skills = GetComponent<SkillSet>();
+            if (skills == null) skills = gameObject.AddComponent<SkillSet>();
+            if (_stats != null && _stats.Class != null)
+                skills.SetDifficulty(Mathf.Max(0.05f, _stats.Class.MeleeSkillDifficulty));
         }
 
         private void OnEnable()

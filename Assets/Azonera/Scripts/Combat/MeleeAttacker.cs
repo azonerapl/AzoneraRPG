@@ -1,5 +1,6 @@
 using UnityEngine;
 using Azonera.Stats;
+using Azonera.Skills;
 
 namespace Azonera.Combat
 {
@@ -17,8 +18,11 @@ namespace Azonera.Combat
         [SerializeField] private DamageType _damageType = DamageType.Physical;
         [Tooltip("Mnożnik obrażeń względem statystyki Attack.")]
         [SerializeField] private float _damageMultiplier = 1f;
+        [Tooltip("Umiejętność broni trenowana i skalująca obrażenia (dla posiadaczy SkillSet).")]
+        [SerializeField] private SkillType _weaponSkill = SkillType.Sword;
 
         private CharacterStats _stats;
+        private SkillSet _skills;   // opcjonalny — gracz ma, potwory zwykle nie
         private float _cooldownTimer;
 
         public float AttackRange => _attackRange;
@@ -29,6 +33,18 @@ namespace Azonera.Combat
         private void Awake()
         {
             _stats = GetComponent<CharacterStats>();
+        }
+
+        // Leniwe pobranie SkillSet — działa niezależnie od kolejności Awake i gdy dodany w runtime.
+        private SkillSet Skills => _skills != null ? _skills : (_skills = GetComponent<SkillSet>());
+
+        /// <summary>Mnożnik obrażeń od poziomu umiejętności broni (10 = neutralny).</summary>
+        private float WeaponSkillFactor()
+        {
+            var sk = Skills;
+            if (sk == null) return 1f;
+            int lvl = sk.GetLevel(_weaponSkill);
+            return Mathf.Max(0.2f, 1f + 0.03f * (lvl - 10));
         }
 
         private void Update()
@@ -48,7 +64,7 @@ namespace Azonera.Combat
             if (target == null || target.IsDead || !IsReady) return false;
             if (!InRange(target.Transform)) return false;
 
-            float baseAtk = _stats.GetStat(StatType.Attack) * _damageMultiplier;
+            float baseAtk = _stats.GetStat(StatType.Attack) * _damageMultiplier * WeaponSkillFactor();
             if (_damageType == DamageType.Magic)
                 baseAtk += _stats.GetStat(StatType.MagicPower);
 
@@ -60,6 +76,11 @@ namespace Azonera.Combat
             var info = new DamageInfo(dmg, _damageType, gameObject, crit, target.Transform.position);
             target.ApplyDamage(info);
             OnHit?.Invoke(target, info);
+
+            // Trening umiejętności: atakujący trenuje broń, broniący — Shielding.
+            _skills?.AddTries(_weaponSkill, 1f);
+            var targetSkills = target.Transform != null ? target.Transform.GetComponent<SkillSet>() : null;
+            targetSkills?.AddTries(SkillType.Shielding, 1f);
 
             float atkSpeed = Mathf.Max(0.1f, _stats.GetStat(StatType.AttackSpeed));
             _cooldownTimer = 1f / atkSpeed;
