@@ -26,6 +26,8 @@ namespace Azonera.Player
             }
 
             _visual = CharacterVisualFactory.BuildKnight(transform);
+            var idle = _visual.AddComponent<CharacterIdleAnimator>();
+            // target = sam KnightVisual (Start ustawi transform)
         }
     }
 }

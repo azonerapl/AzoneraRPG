@@ -121,6 +121,19 @@ namespace Azonera.Player
             Part(PrimitiveType.Cube, "Blade", sword, new Vector3(0f, 0.62f, 0f), new Vector3(0.07f, 0.55f, 0.03f), blade);
             Part(PrimitiveType.Sphere, "Pommel", sword, new Vector3(0f, -0.1f, 0f), new Vector3(0.09f, 0.09f, 0.09f), gold);
 
+            // --- Detale zbroi (tassety, nakolanniki, emblemat, kołnierz) ---
+            Part(PrimitiveType.Cube, "Tasset_L", t, new Vector3(-0.16f, -0.44f, 0.14f), new Vector3(0.22f, 0.2f, 0.06f), steel, Quaternion.Euler(10, 0, 4));
+            Part(PrimitiveType.Cube, "Tasset_R", t, new Vector3(0.16f, -0.44f, 0.14f), new Vector3(0.22f, 0.2f, 0.06f), steel, Quaternion.Euler(10, 0, -4));
+            Part(PrimitiveType.Cube, "Tasset_C", t, new Vector3(0f, -0.46f, 0.15f), new Vector3(0.2f, 0.24f, 0.05f), leather);
+            Part(PrimitiveType.Sphere, "Knee_L", t, new Vector3(-0.17f, -0.78f, 0.08f), new Vector3(0.2f, 0.16f, 0.2f), steel);
+            Part(PrimitiveType.Sphere, "Knee_R", t, new Vector3(0.17f, -0.78f, 0.08f), new Vector3(0.2f, 0.16f, 0.2f), steel);
+            Part(PrimitiveType.Sphere, "Emblem", t, new Vector3(0f, 0.08f, 0.19f), new Vector3(0.14f, 0.16f, 0.05f), gold);
+            Part(PrimitiveType.Cube, "Gorget", t, new Vector3(0f, 0.2f, 0.04f), new Vector3(0.34f, 0.1f, 0.28f), dark);
+            Part(PrimitiveType.Cube, "NoseGuard", t, new Vector3(0f, 0.42f, 0.15f), new Vector3(0.04f, 0.14f, 0.05f), steel);
+
+            // --- Peleryna: dolny, szerszy fragment (falowanie) ---
+            Part(PrimitiveType.Cube, "Cape_Lower", t, new Vector3(0f, -0.55f, -0.22f), new Vector3(0.62f, 0.75f, 0.04f), cape, Quaternion.Euler(12, 0, 0));
+
             return root;
         }
     }

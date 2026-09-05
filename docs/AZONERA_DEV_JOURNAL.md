@@ -100,3 +100,12 @@ _Ostatnia aktualizacja: SESJA 3, PHASE 1 — KOMPILACJA ZIELONA (0 błędów, po
   - `Player/PlayerController` — gwarancja `PlayerCharacterVisual` w runtime → rycerz pojawia się po PLAY.
   - Węzeł „KnightVisual" gotowy pod podmianę na docelowy model/sprite (pipeline zachowany).
 - Weryfikacja: kompilację potwierdzi wejście w PLAY (Unity kompiluje zmiany przy starcie gry); wcześniejsze pliki sesji zielone.
+
+## SESJA 3 c.d. — Dopracowanie postaci (wybór właściciela: opcja 1)
+- `CharacterVisualFactory` — więcej detali zbroi: tassety (płyty ud), nakolanniki, emblemat na piersi, gorget/kołnierz,
+  nosal hełmu, dolny, szerszy fragment peleryny. Lepsza sylwetka rycerza.
+- `CharacterIdleAnimator` — subtelny „oddech": bob + kołysanie + oddech torsu, wzmacniane podczas ruchu
+  (czyta `PlayerController.CurrentSpeed`). Zastępowalny prawdziwym Animatorem po podmianie na docelowy model.
+- `PlayerCharacterVisual` — po zbudowaniu rycerza dopina `CharacterIdleAnimator`.
+- Foto-real nadal zablokowany (workspace: plan free, 0 kredytów, unlim.available=false) — czeka na doładowanie/plan.
+- Weryfikacja: brak `error CS` po wykryciu zmian; pełny compile przy PLAY.
