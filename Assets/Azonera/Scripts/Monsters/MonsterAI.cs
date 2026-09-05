@@ -31,6 +31,9 @@ namespace Azonera.Monsters
 
         public MonsterData Data => _data;
 
+        /// <summary>Potwór zginął i znika ze świata — sygnał dla spawnera (odliczanie respawnu).</summary>
+        public event System.Action<MonsterAI> OnDespawned;
+
         public void Initialize(MonsterData data)
         {
             _data = data;
@@ -176,9 +179,10 @@ namespace Azonera.Monsters
                     ItemPickup.Spawn(roll.Item, roll.Count, transform.position);
             }
 
-            // Efekt śmierci — na razie proste zniknięcie po chwili
+            // Zwłoki znikają po chwili; spawner dowiaduje się od razu, by zacząć odliczać respawn.
             var col = GetComponent<Collider>();
             if (col != null) col.enabled = false;
+            OnDespawned?.Invoke(this);
             Destroy(gameObject, 1.5f);
         }
     }

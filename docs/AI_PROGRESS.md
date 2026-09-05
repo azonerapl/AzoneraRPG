@@ -80,6 +80,31 @@ backpack; minimapa; battle list; chat z zakładkami; hotbary).
 - Jeśli zielono: PLAY na `AzoneraTemple` → screenshot; potem realne assety (timber/stone kit, postać) wg Art Bible.
 - Jeśli błędy: diagnoza z `build-dungeon.log`, fix, ponowny batchmode.
 
+## Sesja 2026-09-06 — przejęcie projektu + Visual Overhaul (SESJA 4)
+
+Pełny opis: `AZONERA_DEV_JOURNAL.md` → SESJA 4.
+
+### Co działa (nowe)
+- ✅ Liczby obrażeń/leczenia + VFX trafień/śmierci/awansu (pulowane, event-driven).
+- ✅ System celowania (Tab/Esc/klik) + **działająca Battle List** + nameplate'y nad potworami.
+- ✅ Spawnery z respawnem — lokacja przestała się „zużywać".
+- ✅ Kamera MMORPG: skokowy obrót 45°, poziomy zoomu, roof-hiding zasłaniającej geometrii.
+- ✅ Materiały PBR faktycznie podpięte w lochu (4 zestawy CC0: bruk, cegła, drewno, blacha).
+
+### Co NIE działa / nadal placeholder
+- ⛔ **Modele/sprite'y/animacje**: brak narzędzia do generowania grafiki na tym koncie.
+  Potwory/NPC = kapsuły `Visual_DEBUG`, gracz = proceduralny rycerz z brył, VFX = cząstki `_PLACEHOLDER`.
+  Architektura pod podmianę jest gotowa (`MonsterData.ModelPrefab`, węzeł `Visual`), assety muszą przyjść z zewnątrz.
+- 🟡 HUD: backpack, paper doll, hotbary, minimapa, chat, spellbook, quest log — **nadal kosmetyczne**.
+- ⬜ Brak: spelli/cooldownów, questów, sklepu/ekonomii, status effectów, Tierów 1–3, profesji
+  Paladin/Mage/Monk (enum jest, brak assetów ClassData), sieci, audio.
+
+### NASTĘPNY KONKRETNY KROK
+Funkcjonalny ekwipunek: siatka backpacka + paper doll podpięte do `Inventory`/`EquipmentController`
+(ikony, klik = użyj/załóż, waga vs `Capacity`). To zamienia największy „martwy" fragment HUD-u w system.
+
+---
+
 ### WERYFIKACJA (batchmode, 2026-09-05 23:09) — ZIELONO
 - Kompilacja: **0 błędów** (cały projekt + asmdefy + testy).
 - Scena `AzoneraTemple` zbudowana; Library odbudowane.

@@ -61,8 +61,8 @@ namespace Azonera.Core
                 _stats = _player.GetComponent<CharacterStats>();
                 _inventory = _player.GetComponent<Azonera.Inventory.Inventory>();
             }
-            if (_hud == null) _hud = FindFirstObjectByType<HUDController>();
-            if (_camera == null) _camera = FindFirstObjectByType<IsometricCameraController>();
+            if (_hud == null) _hud = FindAnyObjectByType<HUDController>();
+            if (_camera == null) _camera = FindAnyObjectByType<IsometricCameraController>();
         }
 
         private void Update()

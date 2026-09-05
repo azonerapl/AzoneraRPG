@@ -9,55 +9,72 @@ namespace Azonera.Player
 {
     /// <summary>
     /// Router akcji gracza: lewy klik wybiera cel / interakcję (raycast spod kursora),
-    /// po czym gracz automatycznie atakuje zaznaczonego wroga w zasięgu (styl ARPG).
-    /// Deleguje zadawanie obrażeń do <see cref="MeleeAttacker"/> — nie duplikuje logiki walki.
+    /// Tab przełącza wrogów, Escape czyści zaznaczenie. Gracz automatycznie atakuje
+    /// zaznaczonego wroga w zasięgu (styl ARPG/MMORPG).
+    ///
+    /// Nie trzyma własnego stanu celu — deleguje do <see cref="TargetSystem"/>,
+    /// a zadawanie obrażeń do <see cref="MeleeAttacker"/>. Tu żyje wyłącznie WEJŚCIE.
     /// </summary>
     [RequireComponent(typeof(MeleeAttacker))]
     [RequireComponent(typeof(CharacterStats))]
     public class PlayerActions : MonoBehaviour
     {
         [SerializeField] private LayerMask _clickMask = ~0;
-        [SerializeField] private float _autoAttackFollowRange = 12f;
 
         private MeleeAttacker _attacker;
         private CharacterStats _stats;
+        private TargetSystem _targeting;
         private UnityEngine.Camera _cam;
-        private IDamageable _target;
 
-        public IDamageable CurrentTarget => _target;
+        /// <summary>Aktualny cel (dla zgodności z istniejącym kodem/HUD).</summary>
+        public IDamageable CurrentTarget => _targeting != null ? _targeting.Target : null;
+        public TargetSystem Targeting => _targeting;
 
         private void Awake()
         {
             _attacker = GetComponent<MeleeAttacker>();
             _stats = GetComponent<CharacterStats>();
             _cam = UnityEngine.Camera.main;
+
+            // Gwarantujemy system celowania także w scenach zbudowanych wcześniej.
+            _targeting = GetComponent<TargetSystem>();
+            if (_targeting == null) _targeting = gameObject.AddComponent<TargetSystem>();
         }
 
         private void Update()
         {
-            if (_stats.IsDead) { _target = null; return; }
-            if (UIState.BlockWorldInput) { return; }
+            if (_stats.IsDead) { _targeting.ClearTarget(); return; }
+            if (UIState.BlockWorldInput) return;
             if (_cam == null) _cam = UnityEngine.Camera.main;
 
-            if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && !IsPointerOverUI())
-                HandleLeftClick();
+            HandleMouse();
+            HandleKeyboard();
+            AutoAttack();
+        }
 
-            // czyszczenie martwych/oddalonych celów
-            if (_target != null)
-            {
-                if (_target.IsDead ||
-                    Vector3.Distance(transform.position, _target.Transform.position) > _autoAttackFollowRange)
-                {
-                    _target = null;
-                }
-            }
+        private void HandleMouse()
+        {
+            if (Mouse.current == null) return;
+            if (!Mouse.current.leftButton.wasPressedThisFrame) return;
+            if (IsPointerOverUI()) return;
+            HandleLeftClick();
+        }
 
-            // auto-atak w zasięgu
-            if (_target != null && _attacker.InRange(_target.Transform))
-            {
-                FaceTarget(_target.Transform);
-                _attacker.TryAttack(_target);
-            }
+        private void HandleKeyboard()
+        {
+            var kb = Keyboard.current;
+            if (kb == null) return;
+            if (kb.tabKey.wasPressedThisFrame) _targeting.CycleTarget();
+            if (kb.escapeKey.wasPressedThisFrame) _targeting.ClearTarget();
+        }
+
+        private void AutoAttack()
+        {
+            var target = _targeting.Target;
+            if (target == null) return;
+            if (!_attacker.InRange(target.transform)) return;
+            FaceTarget(target.transform);
+            _attacker.TryAttack(target);
         }
 
         private void HandleLeftClick()
@@ -67,7 +84,7 @@ namespace Azonera.Player
             if (!Physics.Raycast(ray, out RaycastHit hit, 200f, _clickMask, QueryTriggerInteraction.Collide))
                 return;
 
-            // Interakcja (NPC, wejścia) ma priorytet
+            // Interakcja (NPC, wejścia) ma priorytet nad walką.
             var interactable = hit.collider.GetComponentInParent<IInteractable>();
             if (interactable != null)
             {
@@ -75,15 +92,21 @@ namespace Azonera.Player
                 if (dist <= interactable.InteractionRange)
                 {
                     interactable.Interact(gameObject);
-                    _target = null;
+                    _targeting.ClearTarget();
                     return;
                 }
             }
 
             // Wybór wroga
-            var dmg = hit.collider.GetComponentInParent<IDamageable>();
-            if (dmg != null && dmg != (IDamageable)_stats && !dmg.IsDead)
-                _target = dmg;
+            var stats = hit.collider.GetComponentInParent<CharacterStats>();
+            if (stats != null && stats != _stats && !stats.IsDead)
+            {
+                _targeting.SetTarget(stats);
+                return;
+            }
+
+            // Klik w puste miejsce = odznaczenie
+            _targeting.ClearTarget();
         }
 
         private static bool IsPointerOverUI()

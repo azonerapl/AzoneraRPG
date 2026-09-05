@@ -40,6 +40,29 @@ namespace Azonera.Stats
         public event Action<CharacterStats> OnDied;
         public event Action<DamageInfo> OnDamaged;
 
+        // ---- Eventy globalne (warstwa prezentacji: floating damage, VFX, dźwięk) ----
+        // Pozwalają jednemu serwisowi obsłużyć WSZYSTKIE encje, także te tworzone w runtime,
+        // bez subskrybowania każdej z osobna. Gameplay nadal używa eventów instancyjnych.
+        /// <summary>(ofiara, trafienie) — dowolna postać otrzymała obrażenia.</summary>
+        public static event Action<CharacterStats, DamageInfo> OnAnyDamaged;
+        /// <summary>(postać, ilość) — dowolna postać została uleczona.</summary>
+        public static event Action<CharacterStats, float> OnAnyHealed;
+        /// <summary>(postać) — dowolna postać zginęła.</summary>
+        public static event Action<CharacterStats> OnAnyDied;
+        /// <summary>(postać, nowy poziom) — dowolna postać awansowała.</summary>
+        public static event Action<CharacterStats, int> OnAnyLevelUp;
+
+        // Statyczne eventy przeżywają wyjście z PLAY, gdy wyłączony jest domain reload —
+        // czyścimy je przy starcie gry, żeby nie trzymać martwych subskrybentów.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticEvents()
+        {
+            OnAnyDamaged = null;
+            OnAnyHealed = null;
+            OnAnyDied = null;
+            OnAnyLevelUp = null;
+        }
+
         // ---- Właściwości ----
         public int Level => _level;
         public long Experience => _experience;
@@ -179,7 +202,9 @@ namespace Azonera.Stats
 
             dmg = Mathf.Max(1f, Mathf.Round(dmg));
             _currentHealth -= dmg;
-            OnDamaged?.Invoke(new DamageInfo(dmg, info.Type, info.Source, info.IsCritical, info.HitPoint));
+            var applied = new DamageInfo(dmg, info.Type, info.Source, info.IsCritical, info.HitPoint);
+            OnDamaged?.Invoke(applied);
+            OnAnyDamaged?.Invoke(this, applied);
             OnHealthChanged?.Invoke(_currentHealth, MaxHealth);
 
             if (_currentHealth <= 0f)
@@ -192,8 +217,11 @@ namespace Azonera.Stats
         public void Heal(float amount)
         {
             if (IsDead || amount <= 0f) return;
+            float before = _currentHealth;
             _currentHealth = Mathf.Min(MaxHealth, _currentHealth + amount);
+            float healed = _currentHealth - before;
             OnHealthChanged?.Invoke(_currentHealth, MaxHealth);
+            if (healed > 0f) OnAnyHealed?.Invoke(this, healed);
         }
 
         public bool TrySpendMana(float amount)
@@ -215,8 +243,13 @@ namespace Azonera.Stats
         {
             if (IsDead) return;
             IsDead = true;
+            LastKiller = killer;
             OnDied?.Invoke(this);
+            OnAnyDied?.Invoke(this);
         }
+
+        /// <summary>Kto zadał ostatni, śmiertelny cios (nagrody, statystyki, PvP).</summary>
+        public GameObject LastKiller { get; private set; }
 
         public void ReviveFull()
         {
@@ -256,6 +289,7 @@ namespace Azonera.Stats
             _currentHealth = MaxHealth; // pełne odnowienie przy awansie
             _currentMana = MaxMana;
             OnLevelUp?.Invoke(_level);
+            OnAnyLevelUp?.Invoke(this, _level);
             RaiseAll();
         }
 

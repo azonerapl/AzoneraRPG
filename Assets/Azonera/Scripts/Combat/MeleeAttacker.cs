@@ -28,6 +28,14 @@ namespace Azonera.Combat
         public float AttackRange => _attackRange;
         public bool IsReady => _cooldownTimer <= 0f;
 
+        /// <summary>Konfiguracja z danych (MonsterData / broń gracza) zamiast ustawień w inspektorze.</summary>
+        public void Configure(float attackRange, SkillType weaponSkill = SkillType.Sword, float damageMultiplier = 1f)
+        {
+            if (attackRange > 0f) _attackRange = attackRange;
+            _weaponSkill = weaponSkill;
+            if (damageMultiplier > 0f) _damageMultiplier = damageMultiplier;
+        }
+
         public System.Action<IDamageable, DamageInfo> OnHit;
 
         private void Awake()

@@ -45,25 +45,43 @@ namespace Azonera.Loot
             return pickup;
         }
 
+        // Gracz jest jeden na scenę — szukamy go raz, a nie co klatkę dla każdego leżącego itemu.
+        // Przy kilkudziesięciu dropach FindWithTag w Update() był realnym kosztem.
+        private static Transform _playerTransform;
+        private static Azonera.Inventory.Inventory _playerInventory;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetPlayerCache()
+        {
+            _playerTransform = null;
+            _playerInventory = null;
+        }
+
+        private static bool ResolvePlayer()
+        {
+            if (_playerTransform != null && _playerInventory != null) return true;
+            var go = GameObject.FindWithTag("Player");
+            if (go == null) return false;
+            _playerTransform = go.transform;
+            _playerInventory = go.GetComponent<Azonera.Inventory.Inventory>();
+            return _playerInventory != null;
+        }
+
         private void Update()
         {
             if (_visual != null) _visual.Rotate(Vector3.up, _spin * Time.deltaTime, Space.World);
 
-            var playerGo = GameObject.FindWithTag("Player");
-            if (playerGo == null) return;
-            if (Vector3.Distance(transform.position, playerGo.transform.position) <= _pickupRadius)
-            {
-                var inv = playerGo.GetComponent<Azonera.Inventory.Inventory>();
-                if (inv != null && Item != null)
-                {
-                    int added = inv.AddItem(Item, Count);
-                    if (added > 0)
-                    {
-                        Debug.Log($"[Loot] Podniesiono: {Item.DisplayName} x{added}");
-                        Destroy(gameObject);
-                    }
-                }
-            }
+            if (Item == null || !ResolvePlayer()) return;
+
+            // Porównanie kwadratów dystansu — bez pierwiastkowania co klatkę.
+            if ((transform.position - _playerTransform.position).sqrMagnitude > _pickupRadius * _pickupRadius)
+                return;
+
+            int added = _playerInventory.AddItem(Item, Count);
+            if (added <= 0) return; // plecak pełny — item zostaje na ziemi
+
+            Debug.Log($"[Loot] Podniesiono: {Item.DisplayName} x{added}");
+            Destroy(gameObject);
         }
     }
 }

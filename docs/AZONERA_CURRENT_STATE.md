@@ -1,13 +1,16 @@
 # CURRENT STATE — AZONERA MMORPG (Existing Unity Project)
 
 > Tryb: CONTINUE EXISTING PROJECT · PRESERVE → IMPROVE → REFACTOR ONLY WHEN NECESSARY
-> Data: 2026-09-05 · Ustalono przez inspekcję plików (nie zgadywanie).
-> Projekt (jedyny projekt Azonery w Unity): `C:\Users\Paweu\TopDownRPGTopDownRPG`
-> (Drugi projekt Unity na dysku — „Setup Guide In-Editor Tutorial" — to samouczek URP, NIE Azonera.)
+> Data pierwotna: 2026-09-05 · Ustalono przez inspekcję plików (nie zgadywanie).
 >
-> ⚠️ Referencja wizualna („załączony screen") NIE została dostarczona w tej sesji. Zakładany kierunek:
-> realistyczne, izometryczne dark-fantasy MMORPG w duchu klasyki (Tibia-like), oryginalna oprawa.
-> Realna praca nad grafiką czeka na dostarczenie screena.
+> ⚠️ **UWAGA — ten dokument opisuje stan z 2026-09-05 i jest częściowo NIEAKTUALNY.**
+> Aktualny stan systemów: `AZONERA_DEV_JOURNAL.md` (sekcja z najnowszą sesją) + `AI_PROGRESS.md`.
+> Sprostowania do treści poniżej:
+> • Ścieżka projektu to **`C:\Projects\AzoneraRPG`** (nie `C:\Users\Paweu\TopDownRPGTopDownRPG`).
+> • Git: gałąź **`main`**, remote **`origin → github.com/azonerapl/AzoneraRPG`** (nie „bez remote").
+> • Referencje wizualne **zostały dostarczone** — analiza w `AZONERA_VISUAL_REFERENCE.md`.
+> • Profesje: enum ma już Knight/Sorcerer/Druid/Paladin/Mage/Monk (brakuje assetów ClassData dla 3 ostatnich).
+> • Scena główna to `AzoneraTemple`, nie `AzoneraStartingVillage`.
 
 ---
 

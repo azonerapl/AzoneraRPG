@@ -85,12 +85,16 @@ namespace Azonera.UI
 
         private void Unbind()
         {
-            if (_stats == null) return;
-            _stats.OnHealthChanged -= HandleHealth;
-            _stats.OnManaChanged -= HandleMana;
-            _stats.OnExperienceChanged -= HandleExp;
-            _stats.OnLevelUp -= HandleLevel;
-            _stats.OnStatsChanged -= RefreshDerived;
+            // Uwaga: skille odpinamy NIEZALEŻNIE od statów. Wcześniejszy wczesny return przy
+            // _stats == null zostawiał żywe subskrypcje SkillSet (wyciek po przebindowaniu HUD).
+            if (_stats != null)
+            {
+                _stats.OnHealthChanged -= HandleHealth;
+                _stats.OnManaChanged -= HandleMana;
+                _stats.OnExperienceChanged -= HandleExp;
+                _stats.OnLevelUp -= HandleLevel;
+                _stats.OnStatsChanged -= RefreshDerived;
+            }
             if (_skillSet != null)
             {
                 _skillSet.OnSkillChanged -= HandleSkillChanged;

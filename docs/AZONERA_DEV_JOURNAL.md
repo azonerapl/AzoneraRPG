@@ -5,7 +5,9 @@
 > Powiązane dokumenty: `AZONERA_TECHNICAL_AUDIT.md`, `AZONERA_CURRENT_STATE.md`, `AZONERA_ROADMAP.md`,
 > `AZONERA_ART_BIBLE.md`, `AZONERA_VISUAL_REFERENCE.md`, `AI_PROGRESS.md`, `TESTING.md`.
 
-Silnik: **Unity 6000.6.0f1 (URP, Linear)** · Ścieżka: **C:\Projects\AzoneraRPG** · Git: gałąź `master` (bez remote).
+Silnik: **Unity 6000.6.0f1 (URP, Linear)** · Ścieżka: **C:\Projects\AzoneraRPG**
+Git: gałąź **`main`**, remote **`origin → https://github.com/azonerapl/AzoneraRPG.git`**
+(wpis „gałąź `master` bez remote" z sesji 1 jest nieaktualny — repo zostało podpięte do GitHuba).
 
 ---
 
@@ -120,3 +122,69 @@ _Ostatnia aktualizacja: SESJA 3, PHASE 1 — KOMPILACJA ZIELONA (0 błędów, po
 - `PlayerCharacterVisual` dopina `KnightAnimator`. Usunięto `CharacterIdleAnimator` (zastąpiony).
 - Proporcje ~2 units (stopy na ziemi, głowa ~2.0). Weryfikacja: **CompileScripts zielone (0 błędów)**.
 - To maksymalny realizm bez zewnętrznych modeli/tekstur; foto-real (sprite/model) czeka na kredyty w usłudze graficznej.
+
+---
+
+## SESJA 4 (2026-09-06) — Przejęcie projektu + Visual Overhaul / warstwa MMORPG
+
+Nowe konto Claude Code przejęło projekt. Pełny audyt (raport przejęcia) → stan zweryfikowany testami:
+**EditMode 33/33, PlayMode 1/1, 0 błędów kompilacji.** Repo zsynchronizowane z `origin/main` (0 ahead/0 behind).
+
+### Zastane, niedokończone WIP z sesji 3
+Pipeline tekstur PBR był **martwym kodem**: `Mat()` w `AzoneraDungeonBuilder` przyjmował `texSlug`,
+istniały `LoadTex()` i `EnsureTexturesImported()`, ale **żadne wywołanie nie przekazywało slugu**,
+a funkcja importu nie była nigdzie wołana. 16 pobranych tekstur CC0 leżało nieużywanych.
+
+### Dodane systemy (warstwa MMORPG)
+- **`Core/ObjectPool.cs`** — generyczna pula obiektów (liczby, VFX, pociski). Koniec z Instantiate/Destroy w walce.
+- **`Stats/CharacterStats`** — globalne eventy `OnAnyDamaged/OnAnyHealed/OnAnyDied/OnAnyLevelUp` + `LastKiller`.
+  Prezentacja subskrybuje JEDEN punkt zamiast każdej encji z osobna (działa też dla spawnów w runtime).
+  Statyki czyszczone przez `RuntimeInitializeOnLoadMethod` (bezpieczne przy wyłączonym domain reload).
+- **`UI/FloatingCombatText` + `UI/CombatTextLayer`** — liczby obrażeń/leczenia. Kotwiczone w świecie,
+  rysowane w screen-space → stała czytelność przy każdym zoomie. Pulowane, z obrysem i cieniem.
+- **`VFX/CombatVfxService`** — proceduralne rozbłyski trafienia/śmierci/leczenia/awansu (ParticleSystem
+  konfigurowany z kodu, pulowany). Kolor niesie typ obrażeń. API gotowe pod podmianę na prefaby VFX.
+- **`Combat/CombatFeedbackService`** — spina dane z prezentacją; bootstrapuje się sam po wczytaniu sceny.
+  Zawiera paletę typów obrażeń (art direction w jednym miejscu).
+- **`Combat/TargetSystem`** — jedno źródło prawdy o celu: zaznaczenie, Tab (cykl), Esc, walidacja
+  (śmierć/dystans), lista wrogów w promieniu posortowana od najbliższego.
+- **`UI/BattleListController`** — Battle List przestała być martwym panelem: nazwa, poziom, pasek HP,
+  klik = zaznaczenie, złote wyróżnienie aktualnego celu. Wiersze recyklingowane.
+- **`UI/NameplateLayer`** — nameplate'y nad potworami (imię + poziom + HP) wg `AZONERA_VISUAL_REFERENCE` §A.
+- **`Monsters/MonsterFactory`** — jedno miejsce składania encji potwora dla runtime'u i edytora.
+- **`World/MonsterSpawner`** — spawn z respawnem (liczebność, promień, opóźnienie + jitter).
+  Wcześniej potwory znikały na stałe → loch „zużywał się" po jednym przejściu.
+- **`Camera/CameraOcclusionHider`** — roof-hiding: geometria między kamerą a graczem przechodzi
+  w `ShadowsOnly` (znika, ale nadal rzuca cień → wnętrze nie rozświetla się dziurą).
+- **`Editor/AzoneraMaterialLibrary`** — współdzielona fabryka materiałów PBR dla wszystkich generatorów scen.
+
+### Przebudowane
+- **`Camera/IsometricCameraController`** — prezentacja MMORPG: obrót Q/E **skokowy co 45°** (stała,
+  czytelna orientacja świata zamiast dryfu), **skokowe poziomy zoomu**, SmoothDamp z wyprzedzeniem
+  w kierunku ruchu, pitch rosnący przy oddaleniu. Nazwy pól `_target/_pitch/_distance` zachowane
+  (generatory scen ustawiają je przez refleksję).
+- **`Player/PlayerActions`** — nie trzyma już własnego stanu celu; deleguje do `TargetSystem`.
+  Dodane Tab/Esc, klik w pustkę = odznaczenie.
+- **`AzoneraDungeonBuilder`** — `Mat()` deleguje do biblioteki materiałów; **tekstury PBR faktycznie
+  podpięte** (podłoga cobblestone ×9, ściany dark_brick ×7, kolumny ×2, beczki/skrzynia dark_wood,
+  palniki box_profile_metal). Statyczne potwory → **spawnery**. Kamera dostaje occlusion hider,
+  HUD dostaje `BattleListController`, panel Battle List powiększony 70→212 px.
+
+### Naprawione błędy z audytu
+1. Martwy pipeline tekstur (patrz wyżej) — loch przestał być jednolicie szary.
+2. `ClassicHUDController.Unbind()` — wczesny `return` przy `_stats == null` zostawiał żywe
+   subskrypcje `SkillSet` (wyciek po przebindowaniu HUD).
+3. `ItemPickup.Update()` — `FindWithTag("Player")` co klatkę dla KAŻDEGO leżącego itemu →
+   statyczny cache gracza + porównanie kwadratów dystansu.
+4. Wszystkie `CS0618` (przestarzałe `FindFirstObjectByType` / `FindObjectsSortMode`) → `FindAnyObjectByType`
+   / `FindObjectsByType(FindObjectsInactive.Exclude)`. Dotyczyło też kodu zastanego (`GameManager`, `NPCInteractable`).
+
+### Decyzje projektowe
+- Zostajemy przy `UnityEngine.UI` (nie TMP) — spójność z istniejącym HUD-em ważniejsza niż migracja,
+  która będzie osobnym, kontrolowanym krokiem.
+- Pakiety `com.unity.ai.assistant` / `com.unity.ai.inference` w `manifest.json` zostawione (dodane
+  przez właściciela w edytorze).
+- **Granica uczciwości:** to konto nie ma narzędzia do generowania modeli/sprite'ów/tekstur.
+  Buduję architekturę, geometrię proceduralną, VFX i podpinam gotowe zestawy PBR. Docelowe modele
+  postaci/potworów/budynków muszą przyjść z zewnątrz — dlatego każdy węzeł grafiki to `Visual`
+  (docelowy) albo `Visual_DEBUG` / `*_PLACEHOLDER` (tymczasowy), wymienialny bez dotykania logiki.

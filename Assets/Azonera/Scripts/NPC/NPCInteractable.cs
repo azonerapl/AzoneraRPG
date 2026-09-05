@@ -29,7 +29,7 @@ namespace Azonera.NPC
 
         public void Interact(GameObject interactor)
         {
-            var ui = FindFirstObjectByType<DialogueController>();
+            var ui = FindAnyObjectByType<DialogueController>();
             if (ui != null) ui.Show(NpcName, DialogueLines);
             else Debug.Log($"[NPC] {NpcName}: {(DialogueLines.Length > 0 ? DialogueLines[0] : "...")}");
         }

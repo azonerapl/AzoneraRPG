@@ -18,6 +18,7 @@ using Azonera.UI;
 using Azonera.Core;
 using Azonera.DevTools;
 using Azonera.VFX;
+using Azonera.World;
 
 namespace Azonera.EditorTools
 {
@@ -39,7 +40,10 @@ namespace Azonera.EditorTools
         public static void BuildDungeon()
         {
             _mats.Clear();
+            AzoneraMaterialLibrary.ResetCache();
             EnsureFolder(MatFolder); EnsureFolder(SceneFolder);
+            // Tekstury muszą być zaimportowane z właściwymi ustawieniami ZANIM powstaną materiały.
+            EnsureTexturesImported();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             BuildLighting();
@@ -109,14 +113,24 @@ namespace Azonera.EditorTools
         {
             var env = new GameObject("Environment").transform;
 
-            var floor = Mat("FloorStone", new Color(0.15f, 0.15f, 0.17f), 0.12f);
-            var wall = Mat("WallStone", new Color(0.11f, 0.11f, 0.13f), 0.08f);
-            var brick = Mat("Brick", new Color(0.17f, 0.16f, 0.15f), 0.1f);
-            var pillarMat = Mat("Pillar", new Color(0.19f, 0.18f, 0.17f), 0.12f);
+            // Materiały PBR: prawdziwy kamień/cegła/drewno/metal zamiast jednolitych kolorów.
+            // Tiling dobrany do realnej skali brył (1 unit = 1 metr) — kostka bruku ma mieć
+            // rozmiar kostki bruku, a nie rozciągniętej plamy na całą ścianę.
+            var floor = Mat("FloorStone", new Color(0.15f, 0.15f, 0.17f), 0.12f,
+                            texSlug: "cobblestone_floor_06", tiling: 9f);
+            var wall = Mat("WallStone", new Color(0.11f, 0.11f, 0.13f), 0.08f,
+                           texSlug: "dark_brick_wall", tiling: 7f);
+            var brick = Mat("Brick", new Color(0.17f, 0.16f, 0.15f), 0.1f,
+                            texSlug: "dark_brick_wall", tiling: 4f);
+            var pillarMat = Mat("Pillar", new Color(0.19f, 0.18f, 0.17f), 0.12f,
+                                texSlug: "dark_brick_wall", tiling: 2f);
+            // Tkanina i złoto nie mają jeszcze zestawów tekstur — jawnie zostają jednolite.
             var carpet = Mat("Carpet", new Color(0.28f, 0.05f, 0.06f), 0.05f);
             var gold = Mat("Gold", new Color(0.85f, 0.62f, 0.18f), 0.6f, 0.9f, new Color(0.5f, 0.35f, 0.08f));
-            var metal = Mat("BrazierMetal", new Color(0.09f, 0.08f, 0.07f), 0.5f, 0.8f);
-            var wood = Mat("Wood", new Color(0.2f, 0.13f, 0.08f), 0.05f);
+            var metal = Mat("BrazierMetal", new Color(0.09f, 0.08f, 0.07f), 0.5f, 0.8f,
+                            texSlug: "box_profile_metal_sheet", tiling: 1.5f);
+            var wood = Mat("Wood", new Color(0.2f, 0.13f, 0.08f), 0.05f,
+                           texSlug: "dark_wood", tiling: 2f);
 
             const float W = 30f, D = 24f, H = 5.5f, T = 1f;
 
@@ -267,6 +281,10 @@ namespace Azonera.EditorTools
             SetRef(iso, "_target", target);
             SetFloat(iso, "_pitch", 55f);
             SetFloat(iso, "_distance", 16f);
+
+            // Roof-hiding: ściany/kolumny między kamerą a graczem znikają (zostaje ich cień).
+            var hider = camGo.AddComponent<CameraOcclusionHider>();
+            hider.Target = target;
             return cam;
         }
 
@@ -296,38 +314,31 @@ namespace Azonera.EditorTools
             mark.GetComponent<Renderer>().sharedMaterial = Mat("Quest_DEBUG", new Color(1f, 0.85f, 0.2f), 0f, 0f, new Color(1f, 0.8f, 0.15f) * 2f);
         }
 
-        // ============================================================ TEST MONSTERS
+        // ============================================================ SPAWNY POTWORÓW
+        /// <summary>
+        /// Zamiast statycznych potworów stawiamy SPAWNERY — łowisko odnawia się po wyczyszczeniu,
+        /// tak jak w prawdziwym MMORPG. Encje składa MonsterFactory w runtime.
+        /// </summary>
         private static void BuildTestMonsters()
         {
-            var root = new GameObject("Monsters").transform;
-            SpawnMonster("Monster_MarshSnake", new Vector3(-8, 0, 6), root);
-            SpawnMonster("Monster_MarshSnake", new Vector3(8, 0, 6), root);
-            SpawnMonster("Monster_Goblin", new Vector3(-6, 0, 9), root);
-            SpawnMonster("Monster_Goblin", new Vector3(6, 0, 9), root);
-            SpawnMonster("Monster_Wolf", new Vector3(0, 0, 8), root);
-            SpawnMonster("Monster_Skeleton", new Vector3(0, 0, 10), root);
+            var root = new GameObject("Spawns").transform;
+            AddSpawner(root, "Monster_MarshSnake", new Vector3(-8, 0, 6), count: 2, radius: 2.5f, respawn: 18f);
+            AddSpawner(root, "Monster_Goblin", new Vector3(7, 0, 8), count: 2, radius: 3f, respawn: 26f);
+            AddSpawner(root, "Monster_Wolf", new Vector3(0, 0, 8.5f), count: 1, radius: 2f, respawn: 32f);
+            AddSpawner(root, "Monster_Skeleton", new Vector3(0, 0, -9f), count: 1, radius: 2f, respawn: 45f);
         }
 
-        private static void SpawnMonster(string assetName, Vector3 pos, Transform parent)
+        private static void AddSpawner(Transform parent, string assetName, Vector3 pos,
+                                       int count, float radius, float respawn)
         {
-            var data = AssetDatabase.LoadAssetAtPath<MonsterData>($"Assets/Azonera/ScriptableObjects/Monsters/{assetName}.asset");
+            var data = AssetDatabase.LoadAssetAtPath<MonsterData>(
+                $"Assets/Azonera/ScriptableObjects/Monsters/{assetName}.asset");
             if (data == null) { Debug.LogWarning("[Azonera] Brak MonsterData: " + assetName); return; }
 
-            var go = new GameObject("Monster_" + data.DisplayName);
+            var go = new GameObject("Spawn_" + data.DisplayName);
             go.transform.SetParent(parent, false);
-            go.transform.position = new Vector3(pos.x, 1f, pos.z);
-            var col = go.AddComponent<CapsuleCollider>(); col.height = 2f; col.radius = 0.5f;
-            var rb = go.AddComponent<Rigidbody>(); rb.isKinematic = true; rb.useGravity = false;
-            go.AddComponent<CharacterStats>();
-            go.AddComponent<MeleeAttacker>();
-            var ai = go.AddComponent<MonsterAI>();
-            SetRef(ai, "_data", data);
-
-            var vis = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            vis.name = "Visual_DEBUG"; vis.transform.SetParent(go.transform, false);
-            vis.transform.localScale = new Vector3(0.9f, Mathf.Max(0.5f, data.PlaceholderHeight * 0.7f), 0.9f);
-            Object.DestroyImmediate(vis.GetComponent<Collider>());
-            vis.GetComponent<Renderer>().sharedMaterial = Mat("Mon_" + assetName, data.PlaceholderColor, 0.1f);
+            go.transform.position = pos;
+            go.AddComponent<MonsterSpawner>().Configure(data, count, radius, respawn);
         }
 
         // ============================================================ CLASSIC HUD
@@ -346,6 +357,7 @@ namespace Azonera.EditorTools
             scaler.matchWidthOrHeight = 1f;
             canvasGo.AddComponent<GraphicRaycaster>();
             canvasGo.AddComponent<ClassicHUDController>();
+            canvasGo.AddComponent<BattleListController>();
             var root = canvasGo.transform;
 
             BuildTopLeftVitals(root);
@@ -425,8 +437,8 @@ namespace Azonera.EditorTools
             var bp = SubPanel(col, "Backpack", ref y, w - 12, 120);
             BuildGrid(bp, 6, 2, 42, 6);
 
-            // Battle List
-            var bl = SubPanel(col, "Battle List", ref y, w - 12, 70);
+            // Battle List — wiersze wypełnia BattleListController w runtime (wrogowie w pobliżu).
+            var bl = SubPanel(col, "Battle List", ref y, w - 12, 212);
             Label(bl, "BLEmpty", new Vector2(0, 1), new Vector2(8, -30), new Vector2(w - 40, 20), "— brak celów —", 12, new Color(0.5f, 0.5f, 0.55f), TextAnchor.UpperLeft, FontStyle.Italic);
         }
 
@@ -583,28 +595,32 @@ namespace Azonera.EditorTools
         }
 
         // ============================================================ WORLD HELPERS
-        private static Material Mat(string name, Color color, float smoothness, float metallic = 0f, Color emission = default)
+
+        /// <summary>Zestawy tekstur PBR używane przez ten loch (katalogi w Art/Textures).</summary>
+        private static readonly string[] TextureSets =
         {
-            if (_mats.TryGetValue(name, out var cached)) return cached;
-            string path = $"{MatFolder}/M_{name}.mat";
-            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (mat == null)
-            {
-                var shader = Shader.Find("Universal Render Pipeline/Lit"); if (shader == null) shader = Shader.Find("Standard");
-                mat = new Material(shader); AssetDatabase.CreateAsset(mat, path);
-            }
-            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
-            if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
-            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", metallic);
-            if (emission != default)
-            {
-                mat.EnableKeyword("_EMISSION");
-                mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-                mat.SetColor("_EmissionColor", emission);
-            }
-            EditorUtility.SetDirty(mat); _mats[name] = mat; return mat;
+            "cobblestone_floor_06", "dark_brick_wall", "dark_wood", "box_profile_metal_sheet"
+        };
+
+        /// <summary>
+        /// Materiał lochu. Deleguje do współdzielonej <see cref="AzoneraMaterialLibrary"/>,
+        /// żeby loch i wioska korzystały z jednego standardu PBR.
+        /// Gdy zestaw tekstur nie jest jeszcze w projekcie, materiał degraduje się
+        /// do wersji jednolitej zamiast wyświetlać biały, „wyprany" placeholder.
+        /// </summary>
+        private static Material Mat(string name, Color color, float smoothness, float metallic = 0f,
+            Color emission = default, string texSlug = null, float tiling = 1f)
+        {
+            if (_mats.TryGetValue(name, out var cached) && cached != null) return cached;
+
+            string slug = AzoneraMaterialLibrary.HasTextureSet(texSlug) ? texSlug : null;
+            var mat = AzoneraMaterialLibrary.Get(MatFolder, name, color, smoothness, metallic, emission, slug, tiling);
+            _mats[name] = mat;
+            return mat;
         }
+
+        /// <summary>Reimport zestawów tekstur, by zadziałał AzoneraTextureImporter (normalki/mapy liniowe).</summary>
+        private static void EnsureTexturesImported() => AzoneraMaterialLibrary.EnsureImported(TextureSets);
 
         private static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 localPos, Vector3 scale, Quaternion rot, Material mat)
         {
