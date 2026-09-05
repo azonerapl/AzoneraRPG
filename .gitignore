@@ -45,3 +45,9 @@ Thumbs.db
 # === Crash / profiler ===
 sysinfo.txt
 crashlytics-build.properties
+
+# Logi/wyniki generowane lokalnie (nie wersjonować)
+docs/editor-session.log
+docs/build-dungeon.log
+docs/tests-*.log
+docs/results-*.xml
