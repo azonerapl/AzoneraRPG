@@ -6,9 +6,13 @@
 ---
 
 ## 1. Kierunek artystyczny
-**REALISTIC DARK FANTASY** — dojrzały, mroczny, wiarygodny świat średniowiecznego fantasy.
-Referencyjny „mood": zmierzch/noc, ciepłe światło pochodni kontra chłodny księżyc, mgła, wilgotny kamień,
-zniszczone drewno, patyna na metalu. NIE cartoon, NIE toy-like, NIE low-poly prototype, NIE mobilny placeholder.
+**REALISTIC ISOMETRIC 3D DARK FANTASY MMORPG** — realistyczne izometryczne 3D w jakości nowoczesnego RPG,
+z głębią systemów klasycznego MMORPG. Potwierdzony referencjami użytkownika — pełna analiza:
+**`AZONERA_VISUAL_REFERENCE.md`** (obowiązkowa lektura przed każdym assetem). Materiał: `docs/reference/*.png`.
+Charakterystyka: architektura szachulcowa (biały tynk + ciemne belki, deski, kamień), gęste realistyczne wnętrza,
+ciepłe światło pochodni vs. chłodne światło dzienne, **roof-hiding** wnętrz, realistyczne proporcje postaci,
+world-space nameplaty (imię + portret + HP/mana + ikona profesji). NIE kopiujemy referencji 1:1 — odtwarzamy
+CHARAKTER oryginalną oprawą. NIE cartoon, NIE toy-like, NIE prymitywy jako finał.
 
 ## 2. Paleta i światło
 - Bazowa kolorystyka środowiska: desaturowane zielenie, grafit/szarość kamienia, brąz drewna, patyna.

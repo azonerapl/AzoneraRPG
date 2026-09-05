@@ -34,10 +34,22 @@
 - Dane: ScriptableObjects jako źródło prawdy.
 - UI: TextMeshPro + design system dark-fantasy.
 
+### ZMIANA TRYBU (2026-09-05, po dyrektywie użytkownika)
+- Tryb doprecyzowany: **CONTINUE EXISTING PROJECT** (nie budowa od zera) → PRESERVE → IMPROVE → refactor tylko gdy konieczne.
+- Potwierdzono: jedyny projekt Azonery w Unity = `TopDownRPGTopDownRPG` (drugi projekt = tutorial URP).
+- Dodano `docs/AZONERA_CURRENT_STATE.md` w wymaganym formacie (audyt „przejęcia" istniejącego projektu).
+- Vocations docelowe wg dyrektywy: Knight/Paladin/Sorcerer/Druid — brakuje **Paladin**.
+- ✅ Referencja wizualna DOSTARCZONA (2 screeny) → analiza w `AZONERA_VISUAL_REFERENCE.md`, kopie w `docs/reference/`.
+  Cel potwierdzony: realistyczne izometryczne 3D (Ref#1) + głębia systemów klasycznego MMORPG (Ref#2), oryginalna oprawa.
+  Kamera izometryczna = właściwa tech → ZACHOWUJEMY. Do dodania: roof-hiding, floating dmg, gęste wnętrza, Paladin, spelle/depot.
+- Art Bible zaktualizowany do „Realistic Isometric 3D Dark Fantasy MMORPG".
+
 ### NASTĘPNY KONKRETNY KROK
-1. (domknięcie PHASE 0) git init + pierwszy commit „restore point".
+1. (domknięcie PHASE 0) git init + pierwszy commit „restore point" — ✅ zrobione (2c1b1bc).
 2. PHASE 1: `TestArena.unity` + testy automatyczne (EditMode: Stats/Inventory/Loot/Save;
    PlayMode: pętla walki) → zweryfikować i domknąć pętlę single-player.
+   Uwaga wykonawcza: uruchomienie testów w batchmode wymaga zamknięcia otwartego edytora (blokada Library),
+   albo uruchomienia Test Runner z GUI przez użytkownika.
 
 ### Uwagi operacyjne
 - Tryb produkcyjny: praca WYŁĄCZNIE w katalogu projektu, przez kod/CLI/edytor-skrypty. Bez sterowania pulpitem.
