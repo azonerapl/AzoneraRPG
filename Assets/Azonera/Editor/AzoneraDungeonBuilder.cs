@@ -402,7 +402,7 @@ namespace Azonera.EditorTools
         }
 
         // ============================================================ PLAYER
-        private static GameObject BuildPlayer()
+        internal static GameObject BuildPlayer()
         {
             var knight = AssetDatabase.LoadAssetAtPath<ClassData>("Assets/Azonera/ScriptableObjects/Classes/Class_Knight.asset");
             var player = new GameObject("Player") { tag = "Player" };
@@ -436,7 +436,7 @@ namespace Azonera.EditorTools
             return player;
         }
 
-        private static UnityEngine.Camera BuildCamera(Transform target)
+        internal static UnityEngine.Camera BuildCamera(Transform target)
         {
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<UnityEngine.Camera>();
@@ -453,7 +453,7 @@ namespace Azonera.EditorTools
             return cam;
         }
 
-        private static void BuildManagers()
+        internal static void BuildManagers()
         {
             var go = new GameObject("GameSystems");
             go.AddComponent<GameManager>();
@@ -507,7 +507,7 @@ namespace Azonera.EditorTools
         }
 
         // ============================================================ CLASSIC HUD
-        private static void BuildClassicHUD()
+        internal static void BuildClassicHUD()
         {
             var es = new GameObject("EventSystem");
             es.AddComponent<UnityEngine.EventSystems.EventSystem>();
