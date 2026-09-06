@@ -37,6 +37,7 @@ namespace Azonera.EditorTools
         [MenuItem("Azonera/★ Zbuduj Vertical Slice (wszystko)", priority = 0)]
         public static void BuildEverything()
         {
+            if (!AzoneraEditorGuards.EnsureNotPlaying("Zbuduj Vertical Slice")) return;
             AzoneraDataBuilder.BuildData();
             BuildScene();
             EditorUtility.DisplayDialog("Azonera",
@@ -49,6 +50,9 @@ namespace Azonera.EditorTools
 
         public static void BuildScene()
         {
+            // Jak w generatorze lochu: NewScene() nie może zadziałać w trybie PLAY.
+            if (!AzoneraEditorGuards.EnsureNotPlaying("Zbuduj scenę wioski")) return;
+
             _mats.Clear();
             EnsureFolder(SceneFolder);
             EnsureFolder(MatFolder);

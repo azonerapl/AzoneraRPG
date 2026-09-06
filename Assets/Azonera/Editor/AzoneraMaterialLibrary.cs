@@ -31,9 +31,14 @@ namespace Azonera.EditorTools
         /// </summary>
         /// <param name="texSlug">Nazwa katalogu zestawu tekstur; null = materiał jednolity.</param>
         /// <param name="tiling">Ile razy tekstura powtarza się na jednostkę UV obiektu.</param>
+        /// <param name="tintTexture">
+        /// Gdy true, tekstura jest MNOŻONA przez <paramref name="color"/> zamiast być pokazywana
+        /// w oryginalnych barwach. Potrzebne np. dla czerwonego dywanu zrobionego z neutralnej
+        /// tekstury tkaniny — geometria detalu zostaje, kolor jest nasz.
+        /// </param>
         public static Material Get(string folder, string name, Color color, float smoothness,
                                    float metallic = 0f, Color emission = default,
-                                   string texSlug = null, float tiling = 1f)
+                                   string texSlug = null, float tiling = 1f, bool tintTexture = false)
         {
             string key = folder + "/" + name;
             if (_cache.TryGetValue(key, out var cached) && cached != null) return cached;
@@ -48,7 +53,7 @@ namespace Azonera.EditorTools
                 AssetDatabase.CreateAsset(mat, path);
             }
 
-            ApplySurface(mat, color, smoothness, metallic, emission, texSlug, tiling);
+            ApplySurface(mat, color, smoothness, metallic, emission, texSlug, tiling, tintTexture);
 
             EditorUtility.SetDirty(mat);
             _cache[key] = mat;
@@ -56,12 +61,13 @@ namespace Azonera.EditorTools
         }
 
         private static void ApplySurface(Material mat, Color color, float smoothness, float metallic,
-                                         Color emission, string texSlug, float tiling)
+                                         Color emission, string texSlug, float tiling, bool tintTexture)
         {
             bool textured = !string.IsNullOrEmpty(texSlug);
 
             // Przy teksturze albedo musi być niemal białe — inaczej przyciemniamy prawdziwe kolory mapy.
-            Color baseCol = textured ? new Color(0.95f, 0.95f, 0.95f) : color;
+            // Wyjątek: tintTexture, gdy świadomie chcemy przefarbować materiał na własny kolor.
+            Color baseCol = textured && !tintTexture ? new Color(0.95f, 0.95f, 0.95f) : color;
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", baseCol);
             if (mat.HasProperty("_Color")) mat.SetColor("_Color", baseCol);
             if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);

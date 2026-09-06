@@ -39,6 +39,10 @@ namespace Azonera.EditorTools
         [MenuItem("Azonera/★ Zbuduj Loch Referencyjny (Temple + Classic HUD)", priority = 1)]
         public static void BuildDungeon()
         {
+            // NewScene() jest zabronione w trybie PLAY — bez tej blokady generator rzucał
+            // InvalidOperationException i zostawiał użytkownika z pustą sceną „Untitled".
+            if (!AzoneraEditorGuards.EnsureNotPlaying("Zbuduj Loch Referencyjny")) return;
+
             _mats.Clear();
             AzoneraMaterialLibrary.ResetCache();
             EnsureFolder(MatFolder); EnsureFolder(SceneFolder);
@@ -77,16 +81,48 @@ namespace Azonera.EditorTools
             sun.shadows = LightShadows.Soft;
             sun.transform.rotation = Quaternion.Euler(60f, -40f, 0f);
 
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.07f, 0.07f, 0.10f);
+            // Ambient trójstrefowy: chłodne niebo, neutralne zenit-horyzont, cieplejszy odbłysk
+            // od podłogi. Płaski ambient spłaszczał bryły — tu każda ściana dostaje inny ton.
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.10f, 0.11f, 0.16f);
+            RenderSettings.ambientEquatorColor = new Color(0.09f, 0.085f, 0.09f);
+            RenderSettings.ambientGroundColor = new Color(0.10f, 0.075f, 0.05f);
+            RenderSettings.ambientIntensity = 1f;
+
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.03f, 0.03f, 0.05f);
-            RenderSettings.fogDensity = 0.028f;
+            RenderSettings.fogColor = new Color(0.035f, 0.032f, 0.045f);
+            RenderSettings.fogDensity = 0.022f;
 
+            BuildReflectionProbe();
             TryPostFX();
         }
 
+        /// <summary>
+        /// Sonda odbić — bez niej metal (palniki, złoto, zbroja gracza) odbija czarną pustkę
+        /// i wygląda jak matowy plastik. Z nią łapie ciepłe światło wnętrza.
+        /// </summary>
+        private static void BuildReflectionProbe()
+        {
+            var go = new GameObject("Reflection Probe");
+            go.transform.position = new Vector3(0f, 2.5f, 0f);
+            var probe = go.AddComponent<ReflectionProbe>();
+            probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+            probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.OnAwake;
+            probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
+            probe.size = new Vector3(34f, 10f, 28f);
+            probe.resolution = 256;
+            probe.cullingMask = ~0;
+            probe.intensity = 1f;
+            probe.boxProjection = true;
+        }
+
+        /// <summary>
+        /// Pełny stos color gradingu — to on odpowiada za „filmowy" wygląd zamiast surowego renderu.
+        /// Najważniejszy element to TONEMAPPING ACES: bez niego jasne miejsca (ogień, emisja)
+        /// wypalają się do płaskiej bieli, a ciemne do czarnej plamy. ACES zachowuje detal
+        /// w obu skrajnościach i daje kontrast, z którego żyje dark fantasy.
+        /// </summary>
         private static void TryPostFX()
         {
             try
@@ -94,14 +130,51 @@ namespace Azonera.EditorTools
                 var volGo = new GameObject("Global Volume");
                 var vol = volGo.AddComponent<UnityEngine.Rendering.Volume>();
                 vol.isGlobal = true;
+                vol.priority = 1f;
                 var profile = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>();
+
+                // 1. Tonemapping ACES — filmowa krzywa, ratuje przepalenia ognia i emisji.
+                var tone = profile.Add<UnityEngine.Rendering.Universal.Tonemapping>(true);
+                tone.mode.Override(UnityEngine.Rendering.Universal.TonemappingMode.ACES);
+
+                // 2. Bloom — ciepła poświata pochodni i kryształów. Próg nisko, by łapał ogień.
                 var bloom = profile.Add<UnityEngine.Rendering.Universal.Bloom>(true);
-                bloom.intensity.Override(1.1f); bloom.threshold.Override(0.8f);
-                bloom.tint.Override(new Color(1f, 0.85f, 0.6f));
+                bloom.intensity.Override(1.35f);
+                bloom.threshold.Override(0.75f);
+                bloom.scatter.Override(0.72f);
+                bloom.tint.Override(new Color(1f, 0.86f, 0.62f));
+                bloom.highQualityFiltering.Override(true);
+
+                // 3. Ekspozycja/kontrast/nasycenie — baza nastroju.
                 var ca = profile.Add<UnityEngine.Rendering.Universal.ColorAdjustments>(true);
-                ca.postExposure.Override(0.05f); ca.contrast.Override(18f); ca.saturation.Override(-6f);
+                ca.postExposure.Override(0.35f);   // scena była zbyt ciemna, by cokolwiek odczytać
+                ca.contrast.Override(22f);
+                ca.saturation.Override(-4f);
+                ca.colorFilter.Override(new Color(1f, 0.96f, 0.9f));
+
+                // 4. Rozdzielenie tonalne: chłodne cienie vs ciepłe światła = głębia lochu.
+                var smh = profile.Add<UnityEngine.Rendering.Universal.ShadowsMidtonesHighlights>(true);
+                smh.shadows.Override(new Vector4(0.86f, 0.92f, 1.12f, 0f));   // cienie w błękit
+                smh.midtones.Override(new Vector4(1f, 0.99f, 0.96f, 0f));
+                smh.highlights.Override(new Vector4(1.1f, 1.02f, 0.88f, 0f)); // światła w bursztyn
+
+                // 5. Balans bieli — lekko cieplejszy, kamień przestaje być siny.
+                var wb = profile.Add<UnityEngine.Rendering.Universal.WhiteBalance>(true);
+                wb.temperature.Override(8f);
+                wb.tint.Override(-2f);
+
+                // 6. Winieta — kieruje wzrok na środek kadru (standard prezentacji izometrycznej).
                 var vig = profile.Add<UnityEngine.Rendering.Universal.Vignette>(true);
-                vig.intensity.Override(0.42f); vig.smoothness.Override(0.5f);
+                vig.intensity.Override(0.38f);
+                vig.smoothness.Override(0.55f);
+                vig.color.Override(new Color(0.02f, 0.02f, 0.04f));
+
+                // 7. Delikatne ziarno — zbija „cyfrową czystość" renderu, dodaje faktury.
+                var grain = profile.Add<UnityEngine.Rendering.Universal.FilmGrain>(true);
+                grain.type.Override(UnityEngine.Rendering.Universal.FilmGrainLookup.Thin1);
+                grain.intensity.Override(0.15f);
+                grain.response.Override(0.8f);
+
                 AssetDatabase.CreateAsset(profile, MatFolder + "/DungeonVolumeProfile.asset");
                 vol.sharedProfile = profile;
             }
@@ -116,21 +189,24 @@ namespace Azonera.EditorTools
             // Materiały PBR: prawdziwy kamień/cegła/drewno/metal zamiast jednolitych kolorów.
             // Tiling dobrany do realnej skali brył (1 unit = 1 metr) — kostka bruku ma mieć
             // rozmiar kostki bruku, a nie rozciągniętej plamy na całą ścianę.
+            // Fotorealistyczne materiały PBR (Poly Haven, CC0). Tiling dobrany do skali brył
+            // (1 unit = 1 metr): płyta posadzki ma mieć rozmiar płyty, cegła rozmiar cegły.
             var floor = Mat("FloorStone", new Color(0.15f, 0.15f, 0.17f), 0.12f,
-                            texSlug: "cobblestone_floor_06", tiling: 9f);
+                            texSlug: "slate_floor", tiling: 10f);
             var wall = Mat("WallStone", new Color(0.11f, 0.11f, 0.13f), 0.08f,
-                           texSlug: "dark_brick_wall", tiling: 7f);
+                           texSlug: "castle_brick_01", tiling: 6f);
             var brick = Mat("Brick", new Color(0.17f, 0.16f, 0.15f), 0.1f,
-                            texSlug: "dark_brick_wall", tiling: 4f);
+                            texSlug: "medieval_wall_01", tiling: 4f);
             var pillarMat = Mat("Pillar", new Color(0.19f, 0.18f, 0.17f), 0.12f,
-                                texSlug: "dark_brick_wall", tiling: 2f);
-            // Tkanina i złoto nie mają jeszcze zestawów tekstur — jawnie zostają jednolite.
-            var carpet = Mat("Carpet", new Color(0.28f, 0.05f, 0.06f), 0.05f);
-            var gold = Mat("Gold", new Color(0.85f, 0.62f, 0.18f), 0.6f, 0.9f, new Color(0.5f, 0.35f, 0.08f));
-            var metal = Mat("BrazierMetal", new Color(0.09f, 0.08f, 0.07f), 0.5f, 0.8f,
-                            texSlug: "box_profile_metal_sheet", tiling: 1.5f);
-            var wood = Mat("Wood", new Color(0.2f, 0.13f, 0.08f), 0.05f,
-                           texSlug: "dark_wood", tiling: 2f);
+                                texSlug: "medieval_blocks_05", tiling: 2.5f);
+            // Dywan: neutralna tkanina przefarbowana na głęboką czerwień (detal splotu zostaje).
+            var carpet = Mat("Carpet", new Color(0.42f, 0.07f, 0.08f), 0.06f,
+                             texSlug: "dirty_carpet", tiling: 6f, tintTexture: true);
+            var gold = Mat("Gold", new Color(0.85f, 0.62f, 0.18f), 0.75f, 1f, new Color(0.35f, 0.24f, 0.05f));
+            var metal = Mat("BrazierMetal", new Color(0.35f, 0.32f, 0.3f), 0.45f, 1f,
+                            texSlug: "rusty_metal_04", tiling: 1.5f);
+            var wood = Mat("Wood", new Color(0.2f, 0.13f, 0.08f), 0.08f,
+                           texSlug: "medieval_wood", tiling: 2f);
 
             const float W = 30f, D = 24f, H = 5.5f, T = 1f;
 
@@ -178,9 +254,83 @@ namespace Azonera.EditorTools
             Prim(PrimitiveType.Cube, "Spawn_A", env, new Vector3(-4, 0.9f, D / 2 - 3), new Vector3(0.8f, 1.6f, 0.3f), Quaternion.Euler(0, 45, 0), crystal);
             Prim(PrimitiveType.Cube, "Spawn_B", env, new Vector3(4, 0.9f, D / 2 - 3), new Vector3(0.8f, 1.6f, 0.3f), Quaternion.Euler(0, 45, 0), crystal);
 
-            // Beczki/skrzynie dla wypełnienia
-            for (int i = 0; i < 5; i++)
-                Prim(PrimitiveType.Cylinder, "Barrel", env, new Vector3(-W / 2 + 2.2f, 0.6f, -8 + i * 1.6f), new Vector3(0.7f, 0.6f, 0.7f), Quaternion.identity, wood);
+            // Prawdziwe rekwizyty zamiast prymitywów — beczki, skrzynie, meble, posągi.
+            BuildProps(env, W, D);
+        }
+
+        /// <summary>
+        /// Zagospodarowuje wnętrze prawdziwymi modelami (Poly Haven CC0). Rozmieszczenie jest
+        /// PROJEKTOWANE, nie losowe: magazyn w jednym rogu, biblioteka przy ścianie, jadalnia
+        /// przy drugiej, posągi flankują ołtarz, drobiazgi wypełniają puste miejsca.
+        /// Referencja wizualna wprost tego wymaga — wnętrze ma „żyć", nie być pustą salą.
+        /// </summary>
+        private static void BuildProps(Transform env, float W, float D)
+        {
+            var props = new GameObject("Props").transform;
+            props.SetParent(env, false);
+            var rng = new System.Random(20260906);
+
+            // --- Magazyn: beczki i skrzynie w zachodnim rogu ---
+            var store = new GameObject("Zone_Storage").transform; store.SetParent(props, false);
+            PropVaried("Barrel_01", store, new Vector3(-W / 2 + 1.9f, 0f, -7.0f), rng);
+            PropVaried("Barrel_01", store, new Vector3(-W / 2 + 1.6f, 0f, -5.6f), rng);
+            PropVaried("barrel_03", store, new Vector3(-W / 2 + 2.9f, 0f, -6.4f), rng);
+            PropVaried("wine_barrel_01", store, new Vector3(-W / 2 + 1.8f, 0f, -4.0f), rng);
+            PropVaried("wooden_crate_01", store, new Vector3(-W / 2 + 3.0f, 0f, -4.6f), rng);
+            PropVaried("wooden_crate_02", store, new Vector3(-W / 2 + 2.1f, 0f, -2.6f), rng);
+            // Skrzynia postawiona NA skrzyni — pionowa kompozycja, nie płaski dywan obiektów.
+            Prop("wooden_crate_01", store, new Vector3(-W / 2 + 2.1f, 0.62f, -2.6f), 34f);
+            PropVaried("wicker_basket_01", store, new Vector3(-W / 2 + 3.4f, 0f, -2.0f), rng);
+            PropVaried("wooden_bucket_01", store, new Vector3(-W / 2 + 1.5f, 0f, -1.2f), rng);
+            Prop("wooden_ladder", store, new Vector3(-W / 2 + 1.15f, 0f, 1.4f), 96f);
+
+            // --- Biblioteka: regały i księgi przy ścianie północnej ---
+            var lib = new GameObject("Zone_Library").transform; lib.SetParent(props, false);
+            Prop("wooden_bookshelf_worn", lib, new Vector3(-9.5f, 0f, D / 2 - 1.4f), 180f);
+            Prop("wooden_bookshelf_worn", lib, new Vector3(-6.6f, 0f, D / 2 - 1.4f), 180f);
+            Prop("decorative_book_set_01", lib, new Vector3(-8.0f, 0f, D / 2 - 2.3f), 24f);
+            Prop("WoodenTable_01", lib, new Vector3(-8.0f, 0f, D / 2 - 3.6f), 90f);
+            Prop("wooden_candlestick", lib, new Vector3(-8.0f, 0.78f, D / 2 - 3.6f));
+            Prop("decorative_book_set_01", lib, new Vector3(-8.5f, 0.76f, D / 2 - 3.3f), 200f);
+            Prop("wooden_stool_01", lib, new Vector3(-7.0f, 0f, D / 2 - 4.4f), 40f);
+
+            // --- Jadalnia / obozowisko: stół, ławy, naczynia, ognisko ---
+            var mess = new GameObject("Zone_Mess").transform; mess.SetParent(props, false);
+            Prop("WoodenTable_01", mess, new Vector3(9.0f, 0f, D / 2 - 4.0f), 12f);
+            Prop("painted_wooden_bench", mess, new Vector3(9.0f, 0f, D / 2 - 5.4f), 12f);
+            Prop("wooden_stool_01", mess, new Vector3(10.6f, 0f, D / 2 - 3.4f), 300f);
+            Prop("wooden_bowl_01", mess, new Vector3(8.6f, 0.78f, D / 2 - 4.0f));
+            Prop("brass_pot_01", mess, new Vector3(9.6f, 0.78f, D / 2 - 3.8f), 45f);
+            Prop("ceramic_pot", mess, new Vector3(10.9f, 0f, D / 2 - 2.2f), 160f);
+            Prop("brass_candleholders", mess, new Vector3(9.2f, 0.78f, D / 2 - 4.4f), 20f);
+            Prop("stone_fire_pit", mess, new Vector3(11.0f, 0f, D / 2 - 6.6f), 15f);
+
+            // --- Sanktuarium: posągi flankujące ołtarz + świeczniki ---
+            var shrine = new GameObject("Zone_Shrine").transform; shrine.SetParent(props, false);
+            Prop("gothic_statue", shrine, new Vector3(-3.2f, 0f, 3.6f), 150f, 1.15f);
+            Prop("gothic_statue", shrine, new Vector3(3.2f, 0f, 3.6f), 210f, 1.15f);
+            Prop("wooden_candlestick", shrine, new Vector3(-1.9f, 0f, 2.6f));
+            Prop("wooden_candlestick", shrine, new Vector3(1.9f, 0f, 2.6f));
+            Prop("Lantern_01", shrine, new Vector3(-2.6f, 0f, -2.4f), 30f);
+            Prop("Lantern_01", shrine, new Vector3(2.6f, 0f, -2.4f), 330f);
+
+            // --- Skarbiec: kufer + rozsypane kamienie ---
+            var vault = new GameObject("Zone_Vault").transform; vault.SetParent(props, false);
+            Prop("treasure_chest", vault, new Vector3(W / 2 - 5f, 0f, -D / 2 + 5f), 215f, 1.1f);
+            Prop("wooden_crate_02", vault, new Vector3(W / 2 - 3.4f, 0f, -D / 2 + 4.0f), 70f);
+            Prop("kite_shield", vault, new Vector3(W / 2 - 6.4f, 0f, -D / 2 + 4.2f), 25f);
+
+            // --- Gruz i kamienie: rozsypane, by wnętrze nie było wysprzątane ---
+            var rubble = new GameObject("Zone_Rubble").transform; rubble.SetParent(props, false);
+            Vector3[] rubbleSpots =
+            {
+                new Vector3(-11.5f, 0f, 9.2f), new Vector3(12.2f, 0f, 9.6f),
+                new Vector3(-12.6f, 0f, -9.4f), new Vector3(6.4f, 0f, -9.8f),
+                new Vector3(-4.6f, 0f, -10.2f), new Vector3(13.1f, 0f, 1.6f),
+                new Vector3(-13.2f, 0f, 4.4f),
+            };
+            foreach (var spot in rubbleSpots)
+                PropVaried(rng.Next(2) == 0 ? "stone_01" : "namaqualand_stones_01", rubble, spot, rng, 0.9f);
         }
 
         private static void BuildPillar(Transform parent, Vector3 pos, Material mat, float h)
@@ -204,9 +354,14 @@ namespace Azonera.EditorTools
             var lightGo = new GameObject("FireLight"); lightGo.transform.SetParent(b, false);
             lightGo.transform.localPosition = new Vector3(0, 1.9f, 0);
             var l = lightGo.AddComponent<Light>();
-            l.type = LightType.Point; l.color = new Color(1f, 0.6f, 0.28f); l.intensity = 4.5f; l.range = 11f;
-            l.shadows = LightShadows.None;
-            lightGo.AddComponent<TorchFlicker>().Configure(l, 4.5f);
+            l.type = LightType.Point; l.color = new Color(1f, 0.62f, 0.3f); l.intensity = 6.5f; l.range = 13f;
+            // Miękkie cienie od pochodni — to one budują głębię wnętrza (kolumny rzucają cień
+            // na podłogę i ściany). Atlas 2048 dzielony na 8 palników daje 512 px na źródło.
+            l.shadows = LightShadows.Soft;
+            l.shadowStrength = 0.75f;
+            l.shadowBias = 0.08f;
+            l.shadowNormalBias = 0.5f;
+            lightGo.AddComponent<TorchFlicker>().Configure(l, 6.5f);
         }
 
         private static void BuildAltar(Transform parent, Vector3 pos, Material stone, Material metal)
@@ -221,19 +376,29 @@ namespace Azonera.EditorTools
             var gl = glow.AddComponent<Light>(); gl.type = LightType.Point; gl.color = new Color(0.3f, 1f, 0.5f); gl.intensity = 2.5f; gl.range = 7f; gl.shadows = LightShadows.None;
         }
 
+        /// <summary>
+        /// Rozsypane złoto wokół skrzyni. Sam kufer to już prawdziwy model (BuildProps →
+        /// Zone_Vault), tutaj zostają tylko monety: spłaszczone dyski, nie kule — z góry
+        /// czytają się jak leżące monety, a nie jak kulki.
+        /// </summary>
         private static void BuildTreasure(Transform parent, Vector3 pos, Material gold, Material wood)
         {
             var t = new GameObject("Treasure").transform; t.SetParent(parent, false); t.position = pos;
             var rng = new System.Random(99);
-            for (int i = 0; i < 40; i++)
+            for (int i = 0; i < 46; i++)
             {
-                float x = (float)(rng.NextDouble() - 0.5) * 3f;
-                float z = (float)(rng.NextDouble() - 0.5) * 3f;
-                float y = 0.1f + (float)rng.NextDouble() * 0.3f;
-                var c = Prim(PrimitiveType.Sphere, "Coin", t, new Vector3(x, y, z), Vector3.one * 0.25f, Quaternion.identity, gold);
+                float ang = (float)(rng.NextDouble() * System.Math.PI * 2.0);
+                float rad = 0.4f + (float)rng.NextDouble() * 1.5f;
+                float x = Mathf.Cos(ang) * rad;
+                float z = Mathf.Sin(ang) * rad;
+                float y = 0.02f + (float)rng.NextDouble() * 0.06f;
+                var rot = Quaternion.Euler((float)rng.NextDouble() * 14f - 7f,
+                                           (float)rng.NextDouble() * 360f,
+                                           (float)rng.NextDouble() * 14f - 7f);
+                var c = Prim(PrimitiveType.Cylinder, "Coin", t, new Vector3(x, y, z),
+                             new Vector3(0.11f, 0.012f, 0.11f), rot, gold);
                 Object.DestroyImmediate(c.GetComponent<Collider>());
             }
-            Prim(PrimitiveType.Cube, "Chest", t, new Vector3(0, 0.4f, 0), new Vector3(1.4f, 0.8f, 0.9f), Quaternion.identity, wood);
         }
 
         // ============================================================ PLAYER
@@ -599,6 +764,9 @@ namespace Azonera.EditorTools
         /// <summary>Zestawy tekstur PBR używane przez ten loch (katalogi w Art/Textures).</summary>
         private static readonly string[] TextureSets =
         {
+            "slate_floor", "castle_brick_01", "medieval_wall_01", "medieval_blocks_05",
+            "dirty_carpet", "rusty_metal_04", "medieval_wood",
+            // zestawy z wcześniejszej tury — nadal używane przez inne materiały/sceny
             "cobblestone_floor_06", "dark_brick_wall", "dark_wood", "box_profile_metal_sheet"
         };
 
@@ -609,14 +777,49 @@ namespace Azonera.EditorTools
         /// do wersji jednolitej zamiast wyświetlać biały, „wyprany" placeholder.
         /// </summary>
         private static Material Mat(string name, Color color, float smoothness, float metallic = 0f,
-            Color emission = default, string texSlug = null, float tiling = 1f)
+            Color emission = default, string texSlug = null, float tiling = 1f, bool tintTexture = false)
         {
             if (_mats.TryGetValue(name, out var cached) && cached != null) return cached;
 
             string slug = AzoneraMaterialLibrary.HasTextureSet(texSlug) ? texSlug : null;
-            var mat = AzoneraMaterialLibrary.Get(MatFolder, name, color, smoothness, metallic, emission, slug, tiling);
+            var mat = AzoneraMaterialLibrary.Get(MatFolder, name, color, smoothness, metallic,
+                                                 emission, slug, tiling, tintTexture);
             _mats[name] = mat;
             return mat;
+        }
+
+        // ============================================================ REKWIZYTY (CC0)
+        private const string PropPrefabRoot = "Assets/Azonera/Prefabs/Props";
+
+        /// <summary>
+        /// Stawia rekwizyt z biblioteki prefabów (Poly Haven CC0, przygotowane przez
+        /// <see cref="AzoneraPropImporter"/>). Gdy prefab jeszcze nie istnieje, zwraca null —
+        /// generator działa dalej, tylko bez tej dekoracji.
+        /// </summary>
+        private static GameObject Prop(string slug, Transform parent, Vector3 pos,
+                                       float yaw = 0f, float scale = 1f)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PropPrefabRoot}/P_{slug}.prefab");
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[Azonera] Brak prefabu rekwizytu: {slug} (uruchom Azonera → 2. Zaimportuj rekwizyty)");
+                return null;
+            }
+
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
+            go.transform.position = pos;
+            go.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            go.transform.localScale = Vector3.one * scale;
+            return go;
+        }
+
+        /// <summary>Rekwizyt z losowym obrotem i lekką wariacją skali — nic nie wygląda na klonowane.</summary>
+        private static GameObject PropVaried(string slug, Transform parent, Vector3 pos,
+                                             System.Random rng, float baseScale = 1f)
+        {
+            float yaw = (float)rng.NextDouble() * 360f;
+            float scale = baseScale * (0.92f + (float)rng.NextDouble() * 0.16f);
+            return Prop(slug, parent, pos, yaw, scale);
         }
 
         /// <summary>Reimport zestawów tekstur, by zadziałał AzoneraTextureImporter (normalki/mapy liniowe).</summary>
